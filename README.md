@@ -1,5 +1,5 @@
 # 🎲 Mini Monopoly 5×5
-
+Play live: https://mono110.netlify.app/
 A fast-paced, strategic property trading game on a compact 5×5 grid. Buy properties, build houses and villas, collect rent, and dominate the board!
 
 ![Game Version](https://img.shields.io/badge/version-2.0-blue)
