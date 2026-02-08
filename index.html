@@ -1,0 +1,2066 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mini Monopoly 5×5 - Multiplayer Edition</title>
+<script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+h2 {
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  margin-bottom: 10px;
+}
+
+#status {
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Menu Screen */
+#menu-screen {
+  max-width: 600px;
+  margin: 50px auto;
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+#menu-screen h3 {
+  color: #2c3e50;
+  margin-bottom: 30px;
+  font-size: 24px;
+}
+
+.menu-button {
+  display: block;
+  width: 100%;
+  padding: 20px;
+  margin: 15px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.menu-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.menu-button:active {
+  transform: translateY(0);
+}
+
+.menu-button.ai {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.menu-button.online {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.menu-button.local {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.menu-button .subtitle {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-top: 5px;
+  font-weight: normal;
+}
+
+/* Player Count Selection */
+#player-count-screen {
+  display: none;
+  max-width: 500px;
+  margin: 50px auto;
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+#player-count-screen h3 {
+  color: #2c3e50;
+  margin-bottom: 30px;
+}
+
+.player-count-btn {
+  display: inline-block;
+  width: 80px;
+  padding: 20px;
+  margin: 10px;
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.player-count-btn:hover {
+  transform: translateY(-3px);
+}
+
+/* Online Lobby */
+#online-lobby {
+  display: none;
+  max-width: 500px;
+  margin: 50px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+#online-lobby h3 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.lobby-section {
+  margin: 20px 0;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.lobby-input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.room-code-display {
+  font-size: 32px;
+  font-weight: bold;
+  color: #667eea;
+  letter-spacing: 4px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.connection-status {
+  padding: 10px;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.status-waiting {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-connected {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+#game-screen {
+  display: none;
+}
+
+#wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+/* Mobile-friendly: stack panels above board on small screens */
+@media (max-width: 768px) {
+  #board {
+    width: 90vw !important;
+    height: 90vw !important;
+    max-width: 540px;
+    max-height: 540px;
+  }
+  
+  .controls {
+    width: 90% !important;
+    max-width: 540px;
+  }
+  
+  .controls button {
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+  }
+}
+
+#board {
+  width: 540px;
+  height: 540px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  gap: 6px;
+  background: #2c3e50;
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+}
+
+.tile {
+  border: 2px solid #34495e;
+  background: white;
+  font-size: 10px;
+  position: relative;
+  padding: 6px 4px;
+  border-radius: 6px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+}
+
+.tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.tile-header {
+  font-weight: bold;
+  margin-bottom: 3px;
+  padding: 2px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.row-0 { background: #8d6e63; color: white; }
+.row-1 { background: #81d4fa; color: #333; }
+.row-2 { background: #f48fb1; color: white; }
+.row-3 { background: #ffb74d; color: #333; }
+.row-4 { background: #ef5350; color: white; }
+
+.luck-tile {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%) !important;
+}
+
+.jail-tile {
+  background: linear-gradient(135deg, #607d8b 0%, #90a4ae 100%) !important;
+}
+
+.connection-line {
+  position: absolute;
+  background: currentColor;
+  opacity: 0.4;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.connection-right {
+  right: -3px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 40%;
+}
+
+.connection-down {
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 6px;
+  width: 40%;
+}
+
+.tile.sellable {
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.8) !important;
+  border: 3px solid #4CAF50 !important;
+}
+
+.tile.sellable:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 6px 12px rgba(76, 175, 80, 0.9) !important;
+}
+
+.tile.buildable {
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.8) !important;
+  border: 3px solid #FF9800 !important;
+}
+
+.tile.buildable:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 6px 12px rgba(255, 152, 0, 0.9) !important;
+}
+
+.tile-info {
+  line-height: 1.3;
+}
+
+.token-container {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.token {
+  animation: tokenPop 0.3s ease-out;
+}
+
+@keyframes tokenPop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid black;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.triangle {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 16px solid;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.square {
+  width: 16px;
+  height: 16px;
+  border: 2px solid black;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.diamond {
+  width: 16px;
+  height: 16px;
+  transform: rotate(45deg);
+  border: 2px solid black;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.controls {
+  margin: 15px auto;
+  text-align: center;
+  max-width: 600px;
+}
+
+button {
+  padding: 10px 16px;
+  margin: 4px;
+  background: #3498db;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+button:hover:not(:disabled) {
+  background: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.active {
+  background: #27ae60;
+}
+
+#rollBtn {
+  font-size: 16px;
+  padding: 12px 24px;
+  transition: all 0.2s;
+}
+
+#rollBtn:hover:not(:disabled) {
+  filter: brightness(0.9);
+}
+
+#endBtn {
+  background: #16a085;
+  font-size: 16px;
+  padding: 12px 24px;
+}
+
+#endBtn:hover:not(:disabled) {
+  background: #138871;
+}
+
+#buyBtn {
+  background: #27ae60;
+}
+
+#buyBtn:hover:not(:disabled) {
+  background: #229954;
+}
+
+#houseBtn {
+  background: #f39c12;
+}
+
+#houseBtn:hover:not(:disabled) {
+  background: #d68910;
+}
+
+#villaBtn {
+  background: #9b59b6;
+}
+
+#villaBtn:hover:not(:disabled) {
+  background: #8e44ad;
+}
+
+#sellBtn {
+  background: #e67e22;
+}
+
+#sellBtn:hover:not(:disabled) {
+  background: #d35400;
+}
+
+#bailBtn {
+  background: #34495e;
+}
+
+#bailBtn:hover:not(:disabled) {
+  background: #2c3e50;
+}
+
+#log {
+  background: rgba(255,255,255,0.95);
+  border: 2px solid #333;
+  height: 180px;
+  overflow-y: auto;
+  text-align: left;
+  padding: 12px;
+  margin: 15px auto;
+  max-width: 600px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.log-action {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.log-income {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.log-expense {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+#ai-thinking {
+  display: none;
+  color: white;
+  font-size: 16px;
+  margin: 10px 0;
+  padding: 10px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  max-width: 600px;
+  margin: 10px auto;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.thinking {
+  animation: pulse 1s infinite;
+}
+
+/* Build Mode Indicator */
+#build-mode-indicator {
+  display: none;
+  background: rgba(255, 152, 0, 0.95);
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 10px auto;
+  max-width: 600px;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+</style>
+
+</head>
+<body>
+
+<!-- Menu Screen -->
+<div id="menu-screen">
+  <h3>🎲 Mini Monopoly 5×5</h3>
+  <button class="menu-button local" onclick="showPlayerCountScreen()">
+    🏠 Local Play
+    <div class="subtitle">Play on the same device (2-4 players)</div>
+  </button>
+  <button class="menu-button ai" onclick="startGame('ai')">
+    🤖 vs AI
+    <div class="subtitle">Practice against computer</div>
+  </button>
+  <button class="menu-button online" onclick="showOnlineLobby()">
+    🌐 Online Play
+    <div class="subtitle">Play with friends remotely</div>
+  </button>
+</div>
+
+<!-- Player Count Selection Screen -->
+<div id="player-count-screen">
+  <h3>How many players?</h3>
+  <div>
+    <button class="player-count-btn" onclick="startGame('local', 2)">2</button>
+    <button class="player-count-btn" onclick="startGame('local', 3)">3</button>
+    <button class="player-count-btn" onclick="startGame('local', 4)">4</button>
+  </div>
+  <br>
+  <button class="menu-button" onclick="backToMenu()">⬅️ Back</button>
+</div>
+
+<!-- Online Lobby -->
+<div id="online-lobby">
+  <h3>🌐 Online Lobby</h3>
+  
+  <div class="lobby-section">
+    <h4>Host a Game</h4>
+    <button class="menu-button" onclick="hostGame()">Create Room</button>
+    <div id="room-code-section" style="display: none;">
+      <p>Share this code with your friend:</p>
+      <div class="room-code-display" id="room-code"></div>
+      <div class="connection-status status-waiting" id="host-status">
+        Waiting for opponent to join...
+      </div>
+    </div>
+  </div>
+  
+  <div class="lobby-section">
+    <h4>Join a Game</h4>
+    <input 
+      type="text" 
+      class="lobby-input" 
+      id="join-code-input" 
+      placeholder="Enter room code"
+      maxlength="6"
+    >
+    <button class="menu-button" onclick="joinGame()">Join Room</button>
+    <div class="connection-status" id="join-status" style="display: none;"></div>
+  </div>
+  
+  <button class="menu-button" onclick="backToMenu()">⬅️ Back to Menu</button>
+</div>
+
+<!-- Game Screen -->
+<div id="game-screen">
+  <h2>🎲 Mini Monopoly 5×5</h2>
+  <div id="status"></div>
+  <div id="ai-thinking" class="thinking">🤖 AI is thinking...</div>
+  <div id="build-mode-indicator"></div>
+
+  <div id="wrap">
+    <div id="board"></div>
+  </div>
+
+  <div class="controls">
+    <button id="rollBtn" onclick="roll()">🎲 Roll Dice (Space)</button>
+    <button id="endBtn" onclick="end()">✅ End Turn (Enter)</button>
+    <br>
+    <button id="buyBtn" onclick="buy()" disabled>💰 Buy (B)</button>
+    <button id="houseBtn" onclick="enterBuildMode('house')" disabled>🏠 Build House (H)</button>
+    <button id="villaBtn" onclick="enterBuildMode('villa')" disabled>🏰 Build Villa (V)</button>
+    <button id="sellBtn" onclick="toggleSellMode()" disabled>🏚️ Sell Mode (S)</button>
+    <button id="bailBtn" onclick="payBail()" disabled>🔓 Pay Bail (B)</button>
+  </div>
+
+  <div id="log"></div>
+
+  <div class="controls">
+    <button id="soundBtn" onclick="toggleSound()" class="active">🔊 Sound ON</button>
+    <button onclick="exportLogs()">📋 Export Logs</button>
+    <button onclick="forfeit()">🏳️ Forfeit</button>
+  </div>
+</div>
+
+<script>
+// === GAME CONSTANTS ===
+const START = 1500;
+const HOUSE = 200; // Base reference (actual cost = property price)
+const VILLA = 500; // Base reference (actual cost = house cost)
+const REF = 0.8; // 80% refund
+const LUCK = [6, 18];
+const JAIL = 12;
+const BAIL = 300;
+const PASS_MONEY = 100;
+
+let tiles = [];
+let current = 0;
+let rolled = false;
+let players = [];
+let gameMode = null;
+let soundEnabled = true;
+let sellingMode = false;
+let buildMode = null; // 'house' or 'villa'
+let numPlayers = 2;
+
+// Online multiplayer variables
+let peer = null;
+let conn = null;
+let isHost = false;
+let isMyTurn = true;
+let myPlayerIndex = 0;
+let roomCode = '';
+
+// Player colors and shapes for 2-4 players
+const PLAYER_CONFIGS = [
+  { color: "#2196F3", shape: "circle", name: "Player 1" },
+  { color: "#F44336", shape: "triangle", name: "Player 2" },
+  { color: "#9C27B0", shape: "square", name: "Player 3" },
+  { color: "#FF9800", shape: "diamond", name: "Player 4" }
+];
+
+// Rent values
+const rv = [10, 25, 75, 225, 500];
+
+// === UI FUNCTIONS ===
+function showPlayerCountScreen() {
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('player-count-screen').style.display = 'block';
+}
+
+function backToMenu() {
+  document.getElementById('menu-screen').style.display = 'block';
+  document.getElementById('player-count-screen').style.display = 'none';
+  document.getElementById('online-lobby').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'none';
+  
+  if (peer) {
+    peer.destroy();
+    peer = null;
+  }
+  if (conn) {
+    conn.close();
+    conn = null;
+  }
+  
+  gameMode = null;
+  resetGame();
+}
+
+function showOnlineLobby() {
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('online-lobby').style.display = 'block';
+}
+
+// === ONLINE MULTIPLAYER ===
+function hostGame() {
+  roomCode = generateRoomCode();
+  peer = new Peer(roomCode);
+  
+  peer.on('open', function(id) {
+    document.getElementById('room-code').textContent = roomCode;
+    document.getElementById('room-code-section').style.display = 'block';
+    isHost = true;
+    myPlayerIndex = 0;
+  });
+  
+  peer.on('connection', function(connection) {
+    conn = connection;
+    setupConnection();
+    document.getElementById('host-status').textContent = 'Opponent connected! Starting game...';
+    document.getElementById('host-status').className = 'connection-status status-connected';
+    
+    setTimeout(() => {
+      startGame('online');
+    }, 1000);
+  });
+  
+  peer.on('error', function(err) {
+    console.error('Peer error:', err);
+    alert('Connection error. Please try again.');
+  });
+}
+
+function joinGame() {
+  let code = document.getElementById('join-code-input').value.toUpperCase().trim();
+  
+  if (code.length !== 6) {
+    alert('Please enter a valid 6-character room code');
+    return;
+  }
+  
+  peer = new Peer();
+  
+  peer.on('open', function() {
+    conn = peer.connect(code);
+    setupConnection();
+    isHost = false;
+    myPlayerIndex = 1;
+    
+    document.getElementById('join-status').style.display = 'block';
+    document.getElementById('join-status').textContent = 'Connecting...';
+    document.getElementById('join-status').className = 'connection-status status-waiting';
+  });
+  
+  peer.on('error', function(err) {
+    console.error('Peer error:', err);
+    document.getElementById('join-status').style.display = 'block';
+    document.getElementById('join-status').textContent = 'Failed to connect. Check the room code.';
+    document.getElementById('join-status').className = 'connection-status status-error';
+  });
+}
+
+function setupConnection() {
+  conn.on('open', function() {
+    if (!isHost) {
+      document.getElementById('join-status').textContent = 'Connected! Starting game...';
+      document.getElementById('join-status').className = 'connection-status status-connected';
+      
+      setTimeout(() => {
+        startGame('online');
+      }, 1000);
+    }
+  });
+  
+  conn.on('data', function(data) {
+    handleRemoteAction(data);
+  });
+  
+  conn.on('close', function() {
+    alert('Connection lost. Returning to menu.');
+    backToMenu();
+  });
+}
+
+function sendAction(action, extra = {}) {
+  if (conn && conn.open) {
+    conn.send({ action, ...extra });
+  }
+}
+
+function sendGameState() {
+  if (conn && conn.open && isHost) {
+    conn.send({
+      action: 'sync',
+      tiles: tiles,
+      players: players,
+      current: current,
+      rolled: rolled
+    });
+  }
+}
+
+function handleRemoteAction(data) {
+  if (data.action === 'sync') {
+    tiles = data.tiles;
+    players = data.players;
+    current = data.current;
+    rolled = data.rolled;
+    
+    isMyTurn = (isHost && current === 0) || (!isHost && current === 1);
+    
+    draw();
+    status();
+    updateButtons();
+    return;
+  }
+  
+  switch(data.action) {
+    case 'roll':
+      handleRemoteRoll(data.d1, data.d2);
+      break;
+    case 'buy':
+      handleRemoteBuy();
+      break;
+    case 'house':
+      handleRemoteHouse(data.tileIndex);
+      break;
+    case 'villa':
+      handleRemoteVilla(data.tileIndex);
+      break;
+    case 'sell':
+      handleRemoteSell(data.tileIndex);
+      break;
+    case 'bail':
+      handleRemoteBail();
+      break;
+    case 'end':
+      handleRemoteEnd();
+      break;
+  }
+}
+
+function handleRemoteRoll(d1, d2) {
+  let otherPlayer = isHost ? 1 : 0;
+  
+  if (players[otherPlayer].jailTurns > 0) {
+    if (d1 === d2) {
+      players[otherPlayer].jailTurns = 0;
+      log(`🎉 ${players[otherPlayer].name} rolled DOUBLES and escaped jail!`, "log-income");
+    } else {
+      log(`🎲 ${players[otherPlayer].name} rolled ${d1} + ${d2} = ${d1+d2} (still in jail)`, "log-action");
+      rolled = true;
+      draw();
+      status();
+      updateButtons();
+      return;
+    }
+  }
+  
+  players[otherPlayer].pos = (players[otherPlayer].pos + d1 + d2) % 25;
+  
+  if (players[otherPlayer].pos < d1 + d2 && !LUCK.includes(players[otherPlayer].pos)) {
+    players[otherPlayer].money += PASS_MONEY;
+    log(`💰 ${players[otherPlayer].name} passed START! +$${PASS_MONEY}`, "log-income");
+  }
+  
+  log(`🎲 ${players[otherPlayer].name} rolled ${d1} + ${d2} = ${d1+d2}`, "log-action");
+  rolled = true;
+  
+  handleLanding(otherPlayer);
+  
+  draw();
+  status();
+  updateButtons();
+}
+
+function handleRemoteBuy() {
+  let otherPlayer = isHost ? 1 : 0;
+  let i = players[otherPlayer].pos;
+  tiles[i].o = otherPlayer;
+  players[otherPlayer].money -= price(i);
+  log(`🏠 ${players[otherPlayer].name} bought Tile ${i} for $${price(i)}`, "log-action");
+  
+  draw();
+  updateButtons();
+}
+
+function handleRemoteHouse(tileIndex) {
+  let otherPlayer = isHost ? 1 : 0;
+  let cost = houseCost(tileIndex);
+  players[otherPlayer].money -= cost;
+  tiles[tileIndex].h++;
+  log(`🔨 ${players[otherPlayer].name} built a house on Tile ${tileIndex} for $${cost}`, "log-action");
+  
+  draw();
+  updateButtons();
+}
+
+function handleRemoteVilla(tileIndex) {
+  let otherPlayer = isHost ? 1 : 0;
+  let cost = villaCost(tileIndex);
+  players[otherPlayer].money -= cost;
+  tiles[tileIndex].h = 0;
+  tiles[tileIndex].v = true;
+  log(`🏰 ${players[otherPlayer].name} built a VILLA on Tile ${tileIndex} for $${cost}!`, "log-action");
+  
+  draw();
+  updateButtons();
+}
+
+function handleRemoteSell(tileIndex) {
+  let otherPlayer = isHost ? 1 : 0;
+  let t = tiles[tileIndex];
+  
+  if (t.v) {
+    let refund = villaCost(tileIndex) * REF;
+    players[otherPlayer].money += refund;
+    t.v = false;
+    t.h = 3;
+    log(`💰 ${players[otherPlayer].name} sold villa on Tile ${tileIndex} for $${refund}`, "log-income");
+  } else if (t.h) {
+    let refund = houseCost(tileIndex) * REF;
+    players[otherPlayer].money += refund;
+    t.h--;
+    log(`💰 ${players[otherPlayer].name} sold house on Tile ${tileIndex} for $${refund}`, "log-income");
+  } else {
+    players[otherPlayer].money += price(tileIndex) * REF;
+    t.o = null;
+    log(`💰 ${players[otherPlayer].name} sold property Tile ${tileIndex} for $${price(tileIndex) * REF}`, "log-income");
+  }
+  
+  draw();
+  updateButtons();
+}
+
+function handleRemoteBail() {
+  let otherPlayer = isHost ? 1 : 0;
+  players[otherPlayer].money -= BAIL;
+  players[otherPlayer].jailTurns = 0;
+  log(`🔓 ${players[otherPlayer].name} paid $${BAIL} bail and is FREE!`, "log-income");
+  
+  draw();
+  status();
+  updateButtons();
+}
+
+function handleRemoteEnd() {
+  rolled = false;
+  switchTurn();
+}
+
+function generateRoomCode() {
+  let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+// === GAME INITIALIZATION ===
+function startGame(mode, playerCount = 2) {
+  gameMode = mode;
+  numPlayers = mode === 'online' || mode === 'ai' ? 2 : playerCount;
+  
+  // Hide all screens
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('player-count-screen').style.display = 'none';
+  document.getElementById('online-lobby').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+  
+  resetGame();
+  initBoard();
+  
+  if (gameMode === 'online') {
+    isMyTurn = (isHost && current === 0) || (!isHost && current === 1);
+  }
+  
+  draw();
+  status();
+  updateButtons();
+  log(`🎮 Game started! ${numPlayers} players`, "log-action");
+}
+
+function initBoard() {
+  tiles = [];
+  for (let i = 0; i < 25; i++) {
+    tiles.push({
+      o: null,
+      h: 0,
+      v: false
+    });
+  }
+}
+
+// === UTILITY FUNCTIONS ===
+function log(msg, className = "") {
+  let l = document.getElementById("log");
+  let entry = document.createElement("div");
+  entry.className = className;
+  entry.textContent = msg;
+  l.appendChild(entry);
+  l.scrollTop = l.scrollHeight;
+}
+
+function beep(freq, duration = 0.1) {
+  if (!soundEnabled) return;
+  let ctx = new (window.AudioContext || window.webkitAudioContext)();
+  let osc = ctx.createOscillator();
+  let gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = freq;
+  gain.gain.value = 0.1;
+  osc.start();
+  setTimeout(() => osc.stop(), duration * 1000);
+}
+
+function status() {
+  let p = players[current];
+  let jailInfo = p.jailTurns > 0 ? ` 🚔 (${p.jailTurns} turns in jail)` : '';
+  let turnInfo = gameMode === 'online' ? (isMyTurn ? ' - YOUR TURN' : ' - Waiting...') : '';
+  document.getElementById("status").textContent = 
+    `${p.name}'s Turn${jailInfo}${turnInfo} | Money: $${p.money} | Total: $${wealth(current)}`;
+}
+
+function wealth(pIdx) {
+  let w = players[pIdx].money;
+  for (let i = 0; i < 25; i++) {
+    if (tiles[i].o === pIdx) {
+      w += price(i);
+      w += tiles[i].h * HOUSE;
+      if (tiles[i].v) w += VILLA;
+    }
+  }
+  return w;
+}
+
+function price(i) {
+  if (LUCK.includes(i)) return 0;
+  let row = Math.floor(i / 5);
+  return [100, 150, 200, 300, 400][row];
+}
+
+function houseCost(i) {
+  return Math.floor(price(i) / 2); // House cost = half of property price
+}
+
+function villaCost(i) {
+  return Math.floor(price(i) / 2); // Villa upgrade cost = half of property price
+}
+
+// === CLUSTER DETECTION ===
+function getCluster(tileIndex) {
+  let visited = new Set();
+  let cluster = [];
+  let owner = tiles[tileIndex].o;
+  
+  if (owner === null || LUCK.includes(tileIndex)) return [];
+  
+  function dfs(idx) {
+    if (visited.has(idx)) return;
+    if (LUCK.includes(idx)) return;
+    if (tiles[idx].o !== owner) return;
+    
+    visited.add(idx);
+    cluster.push(idx);
+    
+    // Get neighbors
+    let neighbors = getNeighbors(idx);
+    neighbors.forEach(n => dfs(n));
+  }
+  
+  dfs(tileIndex);
+  return cluster;
+}
+
+function getNeighbors(idx) {
+  let row = Math.floor(idx / 5);
+  let col = idx % 5;
+  let neighbors = [];
+  
+  // Right
+  if (col < 4 && !LUCK.includes(idx) && !LUCK.includes(idx + 1)) {
+    neighbors.push(idx + 1);
+  }
+  
+  // Left
+  if (col > 0 && !LUCK.includes(idx) && !LUCK.includes(idx - 1)) {
+    neighbors.push(idx - 1);
+  }
+  
+  // Down
+  if (row < 4 && !LUCK.includes(idx) && !LUCK.includes(idx + 5)) {
+    neighbors.push(idx + 5);
+  }
+  
+  // Up
+  if (row > 0 && !LUCK.includes(idx) && !LUCK.includes(idx - 5)) {
+    neighbors.push(idx - 5);
+  }
+  
+  return neighbors;
+}
+
+// Check if tile can be built on (even building rule)
+function canBuildHouse(tileIndex) {
+  let cluster = getCluster(tileIndex);
+  if (cluster.length < 3) return false;
+  
+  let tile = tiles[tileIndex];
+  if (tile.v) return false;
+  if (tile.h >= 3) return false;
+  
+  // Even building rule: can't have more than 1 house difference
+  let minHouses = Math.min(...cluster.map(i => tiles[i].v ? 4 : tiles[i].h));
+  let maxHouses = Math.max(...cluster.map(i => tiles[i].v ? 4 : tiles[i].h));
+  
+  // If building here would create >1 difference, block it
+  let newHouses = tile.h + 1;
+  if (newHouses > minHouses + 1) return false;
+  
+  return true;
+}
+
+function canBuildVilla(tileIndex) {
+  let cluster = getCluster(tileIndex);
+  if (cluster.length < 3) return false;
+  
+  let tile = tiles[tileIndex];
+  if (tile.v) return false;
+  if (tile.h !== 3) return false;
+  
+  // Even building rule for villa (treat villa as 4 houses)
+  let minHouses = Math.min(...cluster.map(i => tiles[i].v ? 4 : tiles[i].h));
+  
+  // Building villa (=4 houses) when min is <3 would violate even rule
+  if (minHouses < 3) return false;
+  
+  return true;
+}
+
+// Check if cluster has 3+ owned tiles
+function adjacent(i) {
+  let cluster = getCluster(i);
+  return cluster.length >= 3;
+}
+
+// === DRAWING ===
+function draw() {
+  let board = document.getElementById("board");
+  board.innerHTML = "";
+  
+  for (let i = 0; i < 25; i++) {
+    let tile = document.createElement("div");
+    tile.className = "tile";
+    tile.id = `tile${i}`;
+    
+    let row = Math.floor(i / 5);
+    let rowClass = `row-${row}`;
+    
+    let isLuck = LUCK.includes(i);
+    let isJail = i === JAIL;
+    
+    if (isLuck) {
+      tile.classList.add("luck-tile");
+    } else if (isJail) {
+      tile.classList.add("jail-tile");
+    }
+    
+    let header = document.createElement("div");
+    header.className = `tile-header ${rowClass}`;
+    
+    if (isLuck) {
+      header.textContent = "🍀 LUCK";
+    } else if (isJail) {
+      header.textContent = "🚔 JAIL";
+    } else {
+      header.textContent = `#${i}`;
+    }
+    
+    tile.appendChild(header);
+    
+    if (!isLuck && !isJail) {
+      let info = document.createElement("div");
+      info.className = "tile-info";
+      
+      let p = price(i);
+      let row = Math.floor(i / 5);
+      
+      // Calculate base rent based on property price
+      // Row 0: 1/30 of $100 = ~3.3 → use 3
+      // Row 4: 1/10 of $400 = 40
+      let baseRent;
+      if (row === 0) baseRent = Math.floor(100 / 30); // ~3
+      else if (row === 1) baseRent = Math.floor(150 / 25); // 6
+      else if (row === 2) baseRent = Math.floor(200 / 20); // 10
+      else if (row === 3) baseRent = Math.floor(300 / 15); // 20
+      else if (row === 4) baseRent = Math.floor(400 / 10); // 40
+      
+      info.innerHTML = `<div style="font-weight: bold;">$${p}</div>`;
+      
+      let t = tiles[i];
+      
+      if (t.o !== null) {
+        let ownerColor = players[t.o].color;
+        // Change tile background to owner's color with transparency
+        tile.style.background = `linear-gradient(135deg, ${ownerColor}33 0%, ${ownerColor}66 100%)`;
+        
+        info.innerHTML += `<div style="color: ${ownerColor}; font-weight: bold; font-size: 10px;">${players[t.o].name}</div>`;
+        
+        if (t.v) {
+          info.innerHTML += `<div style="font-size: 10px;">🏰 Villa</div>`;
+        } else if (t.h > 0) {
+          info.innerHTML += `<div style="font-size: 10px;">🏠 ${t.h}H</div>`;
+        }
+      } else {
+        // Show rent info for unowned properties
+        // Multipliers: 5x, 15x, 37x, 45x
+        info.innerHTML += `<div style="font-size: 8px; line-height: 1.3; margin-top: 2px;">
+          R: $${baseRent}<br>
+          1H: $${baseRent * 5} | 2H: $${baseRent * 15}<br>
+          3H: $${baseRent * 37} | V: $${baseRent * 45}
+        </div>`;
+      }
+      
+      tile.appendChild(info);
+      
+      // Connection lines for adjacent tiles
+      let neighbors = getNeighbors(i);
+      let col = i % 5;
+      
+      if (t.o !== null && !isLuck) {
+        neighbors.forEach(n => {
+          if (tiles[n].o === t.o) {
+            let nCol = n % 5;
+            if (nCol > col) {
+              let line = document.createElement("div");
+              line.className = "connection-line connection-right";
+              line.style.color = players[t.o].color;
+              tile.appendChild(line);
+            }
+            if (n > i && nCol === col) {
+              let line = document.createElement("div");
+              line.className = "connection-line connection-down";
+              line.style.color = players[t.o].color;
+              tile.appendChild(line);
+            }
+          }
+        });
+      }
+    }
+    
+    // Token container
+    let tokenContainer = document.createElement("div");
+    tokenContainer.className = "token-container";
+    
+    players.forEach((p, pIdx) => {
+      if (p.pos === i) {
+        let token = document.createElement("div");
+        token.className = `token ${p.shape}`;
+        token.style.backgroundColor = p.color;
+        token.style.borderColor = p.color;
+        tokenContainer.appendChild(token);
+      }
+    });
+    
+    tile.appendChild(tokenContainer);
+    
+    // Click handlers for sell and build modes
+    if (sellingMode) {
+      let t = tiles[i];
+      if (t.o === current && !LUCK.includes(i)) {
+        tile.classList.add("sellable");
+        tile.onclick = () => sellTile(i);
+      }
+    } else if (buildMode) {
+      let t = tiles[i];
+      if (t.o === current && !LUCK.includes(i)) {
+        if (buildMode === 'house' && canBuildHouse(i)) {
+          tile.classList.add("buildable");
+          tile.onclick = () => buildOnTile(i, 'house');
+        } else if (buildMode === 'villa' && canBuildVilla(i)) {
+          tile.classList.add("buildable");
+          tile.onclick = () => buildOnTile(i, 'villa');
+        }
+      }
+    }
+    
+    board.appendChild(tile);
+  }
+}
+
+function updateButtons() {
+  let inJail = players[current].jailTurns > 0;
+  let canRoll = !rolled || inJail;
+  let canEndTurn = rolled || inJail;
+  
+  // Update Roll button color to current player's color
+  let rollBtn = document.getElementById('rollBtn');
+  rollBtn.style.background = players[current].color;
+  rollBtn.style.boxShadow = `0 2px 8px ${players[current].color}88`;
+  
+  // Online mode restrictions
+  if (gameMode === 'online' && !isMyTurn) {
+    document.getElementById('rollBtn').disabled = true;
+    document.getElementById('endBtn').disabled = true;
+    document.getElementById('buyBtn').disabled = true;
+    document.getElementById('houseBtn').disabled = true;
+    document.getElementById('villaBtn').disabled = true;
+    document.getElementById('sellBtn').disabled = true;
+    document.getElementById('bailBtn').disabled = true;
+    return;
+  }
+  
+  document.getElementById('rollBtn').disabled = !canRoll;
+  document.getElementById('endBtn').disabled = !canEndTurn;
+  
+  let i = players[current].pos;
+  let t = tiles[i];
+  
+  // Buy button
+  let canBuy = rolled && !LUCK.includes(i) && t.o === null && players[current].money >= price(i);
+  document.getElementById('buyBtn').disabled = !canBuy;
+  
+  // Bail button
+  let canBail = inJail && players[current].money >= BAIL;
+  document.getElementById('bailBtn').disabled = !canBail;
+  document.getElementById('bailBtn').style.display = inJail ? 'inline-block' : 'none';
+  
+  // House/Villa/Sell buttons - can always use if you have eligible properties
+  let hasOwnedProps = tiles.some((tile, idx) => tile.o === current && !LUCK.includes(idx));
+  let canBuildHouseAnywhere = tiles.some((tile, idx) => {
+    if (tile.o === current && canBuildHouse(idx)) {
+      return players[current].money >= houseCost(idx);
+    }
+    return false;
+  });
+  let canBuildVillaAnywhere = tiles.some((tile, idx) => {
+    if (tile.o === current && canBuildVilla(idx)) {
+      return players[current].money >= villaCost(idx);
+    }
+    return false;
+  });
+  
+  document.getElementById('houseBtn').disabled = !canBuildHouseAnywhere;
+  document.getElementById('villaBtn').disabled = !canBuildVillaAnywhere;
+  document.getElementById('sellBtn').disabled = !hasOwnedProps;
+}
+
+// === BUILD MODE ===
+function enterBuildMode(type) {
+  if (gameMode === 'online' && !isMyTurn) return;
+  
+  if (buildMode === type) {
+    exitBuildMode();
+    return;
+  }
+  
+  if (sellingMode) {
+    toggleSellMode();
+  }
+  
+  buildMode = type;
+  
+  let indicator = document.getElementById('build-mode-indicator');
+  indicator.style.display = 'block';
+  indicator.textContent = type === 'house' 
+    ? '🏠 BUILD HOUSE MODE: Click on any property in a cluster of 3+ to build' 
+    : '🏰 BUILD VILLA MODE: Click on any property with 3 houses in a cluster of 3+ to build';
+  
+  draw();
+  
+  // Update button appearance
+  if (type === 'house') {
+    document.getElementById('houseBtn').classList.add('active');
+    document.getElementById('villaBtn').classList.remove('active');
+  } else {
+    document.getElementById('villaBtn').classList.add('active');
+    document.getElementById('houseBtn').classList.remove('active');
+  }
+}
+
+function exitBuildMode() {
+  buildMode = null;
+  document.getElementById('build-mode-indicator').style.display = 'none';
+  document.getElementById('houseBtn').classList.remove('active');
+  document.getElementById('villaBtn').classList.remove('active');
+  draw();
+}
+
+function buildOnTile(tileIndex, type) {
+  if (gameMode === 'online' && !isMyTurn) return;
+  
+  let t = tiles[tileIndex];
+  
+  if (type === 'house') {
+    if (!canBuildHouse(tileIndex)) return;
+    
+    let cost = houseCost(tileIndex);
+    if (players[current].money < cost) return;
+    
+    players[current].money -= cost;
+    t.h++;
+    log(`🔨 ${players[current].name} built a house on Tile ${tileIndex} for $${cost}`, "log-action");
+    beep(500);
+    
+    if (gameMode === 'online' && isMyTurn) {
+      sendAction('house', { tileIndex });
+    }
+  } else if (type === 'villa') {
+    if (!canBuildVilla(tileIndex)) return;
+    
+    let cost = villaCost(tileIndex);
+    if (players[current].money < cost) return;
+    
+    players[current].money -= cost;
+    t.h = 0;
+    t.v = true;
+    log(`🏰 ${players[current].name} built a VILLA on Tile ${tileIndex} for $${cost}!`, "log-action");
+    beep(300, 0.3);
+    
+    if (gameMode === 'online' && isMyTurn) {
+      sendAction('villa', { tileIndex });
+    }
+  }
+  
+  draw();
+  updateButtons();
+  
+  // Stay in build mode after building
+}
+
+// === SELL MODE ===
+function toggleSellMode() {
+  if (gameMode === 'online' && !isMyTurn) return;
+  
+  sellingMode = !sellingMode;
+  
+  if (buildMode) {
+    exitBuildMode();
+  }
+  
+  let btn = document.getElementById("sellBtn");
+  if (sellingMode) {
+    btn.classList.add("active");
+    btn.textContent = "🏚️ Exit Sell Mode";
+  } else {
+    btn.classList.remove("active");
+    btn.textContent = "🏚️ Sell Mode (S)";
+  }
+  
+  draw();
+  beep(400, 0.1);
+}
+
+function sellTile(tileIndex) {
+  if (gameMode === 'online' && !isMyTurn) return;
+  
+  let t = tiles[tileIndex];
+  
+  if (t.v) {
+    let refund = villaCost(tileIndex) * REF;
+    players[current].money += refund;
+    t.v = false;
+    t.h = 3;
+    log(`💰 ${players[current].name} sold villa on Tile ${tileIndex} for $${refund}`, "log-income");
+  } else if (t.h) {
+    let refund = houseCost(tileIndex) * REF;
+    players[current].money += refund;
+    t.h--;
+    log(`💰 ${players[current].name} sold house on Tile ${tileIndex} for $${refund}`, "log-income");
+  } else {
+    players[current].money += price(tileIndex) * REF;
+    t.o = null;
+    log(`💰 ${players[current].name} sold property Tile ${tileIndex} for $${price(tileIndex) * REF}`, "log-income");
+  }
+  
+  beep(250);
+  
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('sell', { tileIndex });
+  }
+  
+  draw();
+  updateButtons();
+}
+
+// === GAME ACTIONS ===
+window.roll = async function() {
+  if (gameMode === 'online' && !isMyTurn) return;
+  
+  let inJail = players[current].jailTurns > 0;
+  
+  if (!inJail && rolled) return;
+  
+  let d1 = Math.floor(Math.random() * 6) + 1;
+  let d2 = Math.floor(Math.random() * 6) + 1;
+  
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('roll', { d1, d2 });
+  }
+  
+  if (inJail) {
+    if (d1 === d2) {
+      players[current].jailTurns = 0;
+      log(`🎉 ${players[current].name} rolled DOUBLES (${d1} + ${d2}) and escaped jail!`, "log-income");
+      beep(800);
+    } else {
+      log(`🎲 ${players[current].name} rolled ${d1} + ${d2} = ${d1+d2} (still in jail)`, "log-action");
+      beep(300);
+      rolled = true;
+      draw();
+      status();
+      updateButtons();
+      return;
+    }
+  }
+  
+  let oldPos = players[current].pos;
+  players[current].pos = (players[current].pos + d1 + d2) % 25;
+  
+  // Check if passed START
+  if (players[current].pos < oldPos && !LUCK.includes(players[current].pos)) {
+    players[current].money += PASS_MONEY;
+    log(`💰 ${players[current].name} passed START! +$${PASS_MONEY}`, "log-income");
+    beep(600);
+  }
+  
+  log(`🎲 ${players[current].name} rolled ${d1} + ${d2} = ${d1+d2}`, "log-action");
+  beep(500);
+  rolled = true;
+  
+  handleLanding(current);
+  
+  draw();
+  status();
+  updateButtons();
+  
+  if (gameMode === 'ai' && current === 1) {
+    await aiTurn();
+  }
+}
+
+function handleLanding(playerIndex) {
+  let i = players[playerIndex].pos;
+  let t = tiles[i];
+  
+  if (LUCK.includes(i)) {
+    let luck = Math.random() < 0.5;
+    let amount = Math.floor(Math.random() * 100) + 50;
+    
+    if (luck) {
+      players[playerIndex].money += amount;
+      log(`🍀 ${players[playerIndex].name} got LUCKY! +$${amount}`, "log-income");
+      beep(700);
+    } else {
+      players[playerIndex].money -= amount;
+      log(`💸 ${players[playerIndex].name} got UNLUCKY! -$${amount}`, "log-expense");
+      beep(300);
+    }
+    
+    checkBankruptcy();
+    return;
+  }
+  
+  if (i === JAIL) {
+    players[playerIndex].jailTurns = 3;
+    log(`🚔 ${players[playerIndex].name} landed in JAIL for 3 turns!`, "log-action");
+    beep(200, 0.3);
+    return;
+  }
+  
+  if (t.o === null) {
+    log(`🏘️ Unowned property! Buy or End turn.`, "log-action");
+    return;
+  }
+  
+  if (t.o === playerIndex) {
+    log(`🏠 ${players[playerIndex].name} landed on their own property`, "log-action");
+    return;
+  }
+  
+  // Pay rent
+  let row = Math.floor(i / 5);
+  
+  // Calculate base rent
+  let baseRent;
+  if (row === 0) baseRent = Math.floor(100 / 30); // ~3
+  else if (row === 1) baseRent = Math.floor(150 / 25); // 6
+  else if (row === 2) baseRent = Math.floor(200 / 20); // 10
+  else if (row === 3) baseRent = Math.floor(300 / 15); // 20
+  else if (row === 4) baseRent = Math.floor(400 / 10); // 40
+  
+  let pay;
+  
+  if (t.v) {
+    pay = baseRent * 45; // Villa = 45x base rent
+  } else if (t.h === 3) {
+    pay = baseRent * 37; // 3 houses = 37x base rent
+  } else if (t.h === 2) {
+    pay = baseRent * 15; // 2 houses = 15x base rent
+  } else if (t.h === 1) {
+    pay = baseRent * 5; // 1 house = 5x base rent
+  } else {
+    pay = baseRent; // Base rent
+  }
+  
+  players[playerIndex].money -= pay;
+  players[t.o].money += pay;
+  log(`💸 ${players[playerIndex].name} paid ${players[t.o].name} $${pay} rent`, "log-expense");
+  beep(400, 0.2);
+  checkBankruptcy();
+}
+
+function checkBankruptcy() {
+  for (let i = 0; i < numPlayers; i++) {
+    if (players[i].money < 0) {
+      // Try to auto-sell cheapest assets
+      let debt = Math.abs(players[i].money);
+      let ownedProperties = [];
+      
+      // Collect all owned properties with their values
+      for (let tileIdx = 0; tileIdx < 25; tileIdx++) {
+        if (tiles[tileIdx].o === i && !LUCK.includes(tileIdx)) {
+          let value = price(tileIdx) * REF;
+          if (tiles[tileIdx].v) {
+            value += villaCost(tileIdx) * 3 * REF; // 3 houses + villa upgrade
+          } else if (tiles[tileIdx].h > 0) {
+            value += houseCost(tileIdx) * tiles[tileIdx].h * REF;
+          }
+          ownedProperties.push({ tileIdx, value, tile: tiles[tileIdx] });
+        }
+      }
+      
+      // Sort by value (cheapest first)
+      ownedProperties.sort((a, b) => a.value - b.value);
+      
+      // Sell assets starting from cheapest
+      for (let prop of ownedProperties) {
+        if (players[i].money >= 0) break;
+        
+        let tileIdx = prop.tileIdx;
+        let t = tiles[tileIdx];
+        
+        // Sell villa first if exists
+        if (t.v) {
+          let refund = villaCost(tileIdx) * REF;
+          players[i].money += refund;
+          t.v = false;
+          t.h = 3;
+          log(`💰 Auto-sold villa on Tile ${tileIdx} for $${refund}`, "log-income");
+        }
+        
+        // Sell houses one by one
+        while (t.h > 0 && players[i].money < 0) {
+          let refund = houseCost(tileIdx) * REF;
+          players[i].money += refund;
+          t.h--;
+          log(`💰 Auto-sold house on Tile ${tileIdx} for $${refund}`, "log-income");
+        }
+        
+        // Sell property itself if still in debt
+        if (players[i].money < 0) {
+          let refund = price(tileIdx) * REF;
+          players[i].money += refund;
+          t.o = null;
+          log(`💰 Auto-sold property Tile ${tileIdx} for $${refund}`, "log-income");
+        }
+      }
+      
+      // If still bankrupt after selling everything
+      if (players[i].money < 0) {
+        alert(`${players[i].name} went BANKRUPT! Game Over!`);
+        endGame(true);
+      } else {
+        log(`⚠️ ${players[i].name} auto-sold assets to cover debt!`, "log-action");
+        draw();
+      }
+    }
+  }
+}
+
+window.buy = function() {
+  if (gameMode === 'online' && !isMyTurn) return;
+  
+  let i = players[current].pos;
+  tiles[i].o = current;
+  players[current].money -= price(i);
+  log(`🏠 ${players[current].name} bought Tile ${i} for $${price(i)}`, "log-action");
+  beep(700);
+  
+  draw();
+  updateButtons();
+  
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('buy');
+  }
+}
+
+// Legacy house/villa functions (for current tile only) - now redirects to build mode
+window.house = function() {
+  enterBuildMode('house');
+}
+
+window.villa = function() {
+  enterBuildMode('villa');
+}
+
+window.payBail = function() {
+  if (gameMode === 'online' && !isMyTurn) return;
+  if (players[current].jailTurns === 0) return;
+  if (players[current].money < BAIL) return;
+  
+  players[current].money -= BAIL;
+  players[current].jailTurns = 0;
+  log(`🔓 ${players[current].name} paid $${BAIL} bail and is FREE!`, "log-income");
+  beep(600);
+  
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('bail');
+  }
+  
+  draw();
+  status();
+  updateButtons();
+}
+
+window.end = function() {
+  let inJail = players[current].jailTurns > 0;
+  
+  if (!rolled && !inJail) return;
+  if (gameMode === 'online' && !isMyTurn) return;
+  
+  if (sellingMode) {
+    toggleSellMode();
+  }
+  
+  if (buildMode) {
+    exitBuildMode();
+  }
+  
+  // If in jail and tried to roll (but didn't get doubles), decrement jail counter
+  if (inJail && rolled) {
+    players[current].jailTurns--;
+    if (players[current].jailTurns === 0) {
+      log(`🎉 ${players[current].name} is FREE from jail!`, "log-income");
+    } else {
+      log(`🚔 ${players[current].name} stays in jail. ${players[current].jailTurns} turns remaining.`, "log-action");
+    }
+  } else if (!inJail) {
+    log(`✅ ${players[current].name} ended turn`, "log-action");
+  }
+  
+  rolled = false;
+  
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('end');
+  }
+  
+  switchTurn();
+}
+
+function switchTurn() {
+  current = (current + 1) % numPlayers;
+  
+  // Update isMyTurn for online mode
+  if (gameMode === 'online') {
+    if ((isHost && current === 0) || (!isHost && current === 1)) {
+      isMyTurn = true;
+    } else {
+      isMyTurn = false;
+    }
+  }
+  
+  status();
+  updateButtons();
+  
+  if (gameMode === 'online') {
+    sendGameState();
+  }
+  
+  if (gameMode === 'ai' && current === 1 && !rolled) {
+    setTimeout(aiTurn, 1000);
+  }
+}
+
+// AI Logic
+async function aiTurn() {
+  if (gameMode !== 'ai' || current !== 1) return;
+  
+  document.getElementById('ai-thinking').style.display = 'block';
+  await new Promise(r => setTimeout(r, 800));
+  
+  if (!rolled) {
+    await roll();
+    document.getElementById('ai-thinking').style.display = 'none';
+    return;
+  }
+  
+  let i = players[1].pos;
+  let t = tiles[i];
+  
+  // AI decision making
+  if (!LUCK.includes(i)) {
+    // Should buy?
+    if (t.o === null && players[1].money >= price(i) * 1.2) {
+      await new Promise(r => setTimeout(r, 500));
+      buy();
+      document.getElementById('ai-thinking').style.display = 'none';
+      return;
+    }
+    
+    // Should build house on any property?
+    for (let idx = 0; idx < 25; idx++) {
+      if (tiles[idx].o === 1 && canBuildHouse(idx) && players[1].money >= houseCost(idx) * 2) {
+        await new Promise(r => setTimeout(r, 500));
+        buildOnTile(idx, 'house');
+        document.getElementById('ai-thinking').style.display = 'none';
+        return;
+      }
+    }
+    
+    // Should build villa on any property?
+    for (let idx = 0; idx < 25; idx++) {
+      if (tiles[idx].o === 1 && canBuildVilla(idx) && players[1].money >= villaCost(idx) * 1.5) {
+        await new Promise(r => setTimeout(r, 500));
+        buildOnTile(idx, 'villa');
+        document.getElementById('ai-thinking').style.display = 'none';
+        return;
+      }
+    }
+  }
+  
+  // End turn
+  await new Promise(r => setTimeout(r, 500));
+  end();
+  document.getElementById('ai-thinking').style.display = 'none';
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  let btn = document.getElementById("soundBtn");
+  btn.textContent = soundEnabled ? "🔊 Sound ON" : "🔇 Sound OFF";
+  btn.classList.toggle("active");
+  beep(500, 0.1);
+}
+
+function exportLogs() {
+  let logElement = document.getElementById("log");
+  let timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  
+  let gameState = {
+    timestamp: new Date().toISOString(),
+    gameMode: gameMode,
+    numPlayers: numPlayers,
+    currentPlayer: current,
+    players: players.map((p, idx) => ({
+      name: p.name,
+      money: p.money,
+      position: p.pos,
+      jailTurns: p.jailTurns,
+      totalWealth: wealth(idx),
+      properties: tiles.map((t, i) => t.o === idx ? i : null).filter(x => x !== null)
+    })),
+    tiles: tiles.map((t, idx) => ({
+      index: idx,
+      owner: t.o,
+      houses: t.h,
+      villa: t.v
+    })).filter(t => t.owner !== null),
+    log: logElement.innerText
+  };
+  
+  let content = "MINI MONOPOLY GAME LOG\n";
+  content += "=".repeat(50) + "\n\n";
+  content += "Game State at Export:\n";
+  content += JSON.stringify(gameState, null, 2);
+  content += "\n\n" + "=".repeat(50) + "\n\n";
+  content += "Game Log:\n" + gameState.log;
+  
+  let blob = new Blob([content], { type: 'text/plain' });
+  let url = URL.createObjectURL(blob);
+  let a = document.createElement('a');
+  a.href = url;
+  a.download = `monopoly-log-${timestamp}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  log("📋 Game logs exported successfully!", "log-action");
+  beep(600, 0.1);
+}
+
+function forfeit() {
+  if (confirm(`Are you sure ${players[current].name} wants to forfeit?`)) {
+    // Remove current player from game
+    let remainingPlayers = players.filter((p, idx) => idx !== current);
+    
+    if (remainingPlayers.length === 1) {
+      // Only one player left - they win
+      alert(`${remainingPlayers[0].name} wins by forfeit! 🎉`);
+      backToMenu();
+    } else {
+      // Multiple players remain
+      alert(`${players[current].name} has forfeited! Game continues with ${remainingPlayers.length} players.`);
+      
+      // Transfer properties to bank (make them unowned)
+      for (let i = 0; i < 25; i++) {
+        if (tiles[i].o === current) {
+          tiles[i].o = null;
+          tiles[i].h = 0;
+          tiles[i].v = false;
+        }
+      }
+      
+      // Adjust other players' owner indices
+      for (let i = 0; i < 25; i++) {
+        if (tiles[i].o !== null && tiles[i].o > current) {
+          tiles[i].o--;
+        }
+      }
+      
+      // Remove player and adjust current turn
+      players.splice(current, 1);
+      numPlayers--;
+      
+      if (current >= numPlayers) {
+        current = 0;
+      }
+      
+      draw();
+      status();
+      updateButtons();
+    }
+  }
+}
+
+function endGame(forfeit = false) {
+  let wealths = players.map((p, idx) => ({ idx, wealth: wealth(idx) }));
+  wealths.sort((a, b) => b.wealth - a.wealth);
+  let winner = forfeit ? wealths.find(w => w.idx !== current).idx : wealths[0].idx;
+  
+  let msg = forfeit 
+    ? `${players[winner].name} wins by forfeit! 🎉`
+    : `🏆 GAME OVER!\n\n${wealths.map(w => `${players[w.idx].name}: $${w.wealth}`).join('\n')}\n\nWinner: ${players[winner].name}! 🎉`;
+  
+  alert(msg);
+  backToMenu();
+}
+
+function resetGame() {
+  tiles = [];
+  current = 0;
+  rolled = false;
+  sellingMode = false;
+  buildMode = null;
+  
+  players = [];
+  for (let i = 0; i < (numPlayers || 2); i++) {
+    players.push({
+      pos: 0,
+      money: START,
+      jailTurns: 0,
+      ...PLAYER_CONFIGS[i]
+    });
+  }
+  
+  isMyTurn = true;
+  myPlayerIndex = 0;
+  document.getElementById('log').innerHTML = '';
+  document.getElementById('build-mode-indicator').style.display = 'none';
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  // Don't trigger if typing in an input field
+  if (e.target.tagName === 'INPUT') return;
+  
+  // Don't trigger if game hasn't started
+  if (!gameMode) return;
+  
+  // Don't trigger if not your turn in online mode
+  if (gameMode === 'online' && !isMyTurn) return;
+  
+  let key = e.key.toLowerCase();
+  
+  switch(key) {
+    case ' ':
+      e.preventDefault();
+      let rollBtn = document.getElementById('rollBtn');
+      if (rollBtn && !rollBtn.disabled) {
+        roll();
+      }
+      break;
+      
+    case 'enter':
+      e.preventDefault();
+      let endBtn = document.getElementById('endBtn');
+      if (endBtn && !endBtn.disabled) {
+        end();
+      }
+      break;
+      
+    case 'b':
+      e.preventDefault();
+      let buyBtn = document.getElementById('buyBtn');
+      let bailBtn = document.getElementById('bailBtn');
+      // Prioritize Buy over Bail
+      if (buyBtn && !buyBtn.disabled) {
+        buy();
+      } else if (bailBtn && !bailBtn.disabled) {
+        payBail();
+      }
+      break;
+      
+    case 's':
+      e.preventDefault();
+      let sellBtn = document.getElementById('sellBtn');
+      if (sellBtn && !sellBtn.disabled) {
+        toggleSellMode();
+      }
+      break;
+      
+    case 'h':
+      e.preventDefault();
+      let houseBtn = document.getElementById('houseBtn');
+      if (houseBtn && !houseBtn.disabled) {
+        enterBuildMode('house');
+      }
+      break;
+      
+    case 'v':
+      e.preventDefault();
+      let villaBtn = document.getElementById('villaBtn');
+      if (villaBtn && !villaBtn.disabled) {
+        enterBuildMode('villa');
+      }
+      break;
+      
+    case 'escape':
+      e.preventDefault();
+      if (buildMode) {
+        exitBuildMode();
+      } else if (sellingMode) {
+        toggleSellMode();
+      }
+      break;
+  }
+});
+
+// Initialize
+// Don't call resetGame on load - gameMode needs to stay null until game starts
+
+</script>
+
+</body>
+</html>
