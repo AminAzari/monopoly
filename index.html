@@ -552,13 +552,9 @@ button.active {
 <!-- Menu Screen -->
 <div id="menu-screen">
   <h3>🎲 Mini Monopoly 5×5</h3>
-  <button class="menu-button local" onclick="showPlayerCountScreen()">
+  <button class="menu-button local" onclick="showPlayerSetup()">
     🏠 Local Play
-    <div class="subtitle">Play on the same device (2-4 players)</div>
-  </button>
-  <button class="menu-button ai" onclick="startGame('ai')">
-    🤖 vs AI
-    <div class="subtitle">Practice against computer</div>
+    <div class="subtitle">2-4 players (Human or AI)</div>
   </button>
   <button class="menu-button online" onclick="showOnlineLobby()">
     🌐 Online Play
@@ -566,15 +562,20 @@ button.active {
   </button>
 </div>
 
-<!-- Player Count Selection Screen -->
-<div id="player-count-screen">
-  <h3>How many players?</h3>
-  <div>
-    <button class="player-count-btn" onclick="startGame('local', 2)">2</button>
-    <button class="player-count-btn" onclick="startGame('local', 3)">3</button>
-    <button class="player-count-btn" onclick="startGame('local', 4)">4</button>
+<!-- Player Setup Screen -->
+<div id="player-setup-screen" style="display:none; max-width:700px; margin:50px auto; background:white; padding:40px; border-radius:16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
+  <h3>Setup Game</h3>
+  
+  <p><strong>Number of Players:</strong></p>
+  <div style="margin:20px 0;">
+    <button class="player-count-btn" onclick="setupPlayers(2)">2</button>
+    <button class="player-count-btn" onclick="setupPlayers(3)">3</button>
+    <button class="player-count-btn" onclick="setupPlayers(4)">4</button>
   </div>
-  <br>
+  
+  <div id="player-slots" style="margin:30px 0;"></div>
+  
+  <button class="menu-button" id="start-btn" style="display:none;" onclick="startLocalWithAI()">▶️ Start Game</button>
   <button class="menu-button" onclick="backToMenu()">⬅️ Back</button>
 </div>
 
@@ -621,16 +622,15 @@ button.active {
     <div id="board"></div>
   </div>
 
-  <div class="controls">
-    <button id="rollBtn" onclick="roll()">🎲 Roll Dice (Space)</button>
-    <button id="endBtn" onclick="end()">✅ End Turn (Enter)</button>
-    <br>
-    <button id="buyBtn" onclick="buy()" disabled>💰 Buy (B)</button>
-    <button id="houseBtn" onclick="enterBuildMode('house')" disabled>🏠 Build House (H)</button>
-    <button id="villaBtn" onclick="enterBuildMode('villa')" disabled>🏰 Build Villa (V)</button>
-    <button id="sellBtn" onclick="toggleSellMode()" disabled>🏚️ Sell Mode (S)</button>
-    <button id="bailBtn" onclick="payBail()" disabled>🔓 Pay Bail (B)</button>
-  </div>
+<div class="controls">
+  <button id="rollBtn" onclick="roll()">🎲 Roll [SPACE]</button>
+  <button id="bailBtn" class="warning-btn" onclick="payBail()">🔓 Bail [B]</button>
+  <button id="buyBtn" class="action-btn" onclick="buy()">💰 Buy [B]</button>
+  <button id="buildBtn" class="action-btn" onclick="toggleBuildMode()">🏗️ Build [H]</button>
+  <button id="sellBtn" class="danger-btn" onclick="toggleSellMode()">💸 Sell [S]</button>
+  <button id="tradeBtn" class="action-btn" onclick="openTradeMenu()">🤝 Trade [T]</button>
+  <button id="endBtn" onclick="end()">✅ End [ENTER]</button>
+</div>
 
   <div id="log"></div>
 
@@ -638,6 +638,79 @@ button.active {
     <button id="soundBtn" onclick="toggleSound()" class="active">🔊 Sound ON</button>
     <button onclick="exportLogs()">📋 Export Logs</button>
     <button onclick="forfeit()">🏳️ Forfeit</button>
+  </div>
+</div>
+
+
+<!-- Trade Modal -->
+<div id="trade-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; overflow-y:auto;">
+  <div style="background:white; max-width:700px; margin:30px auto; padding:30px; border-radius:12px;">
+    <h3 style="color:#2c3e50; margin-top:0;">🤝 Trade Center</h3>
+    
+    <div style="margin:20px 0;">
+      <label style="font-weight:bold;">Trade with:</label>
+      <select id="trade-partner" onchange="updateTradePartner()" style="width:200px; padding:8px; margin-left:10px; border:1px solid #ddd; border-radius:4px; font-size:14px;">
+        <!-- Populated dynamically -->
+      </select>
+    </div>
+    
+    <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:15px; margin:25px 0;">
+      <!-- Your Offer -->
+      <div style="border:3px solid #2196F3; padding:20px; border-radius:10px; background:#f8f9fa;">
+        <h4 style="margin-top:0; color:#2196F3;">Your Offer</h4>
+        <div id="your-offer">
+          <div style="margin-bottom:15px;">
+            <label style="font-weight:bold;">💰 Cash: $</label>
+            <input type="number" id="your-cash" value="0" min="0" style="width:100px; padding:6px; border:1px solid #ddd; border-radius:4px;" oninput="updateTradeSummary()">
+          </div>
+          <label style="font-weight:bold; display:block; margin-bottom:10px;">🏠 Properties:</label>
+          <div id="your-properties" style="max-height:250px; overflow-y:auto; border:1px solid #ddd; padding:10px; border-radius:4px; background:white;">
+            <!-- Checkboxes -->
+          </div>
+        </div>
+      </div>
+      
+      <div style="display:flex; align-items:center; font-size:32px; color:#666;">
+        ↔
+      </div>
+      
+      <!-- Their Offer -->
+      <div style="border:3px solid #F44336; padding:20px; border-radius:10px; background:#f8f9fa;">
+        <h4 style="margin-top:0; color:#F44336;">Their Offer</h4>
+        <div id="their-offer">
+          <div style="margin-bottom:15px;">
+            <label style="font-weight:bold;">💰 Cash: $</label>
+            <input type="number" id="their-cash" value="0" min="0" style="width:100px; padding:6px; border:1px solid #ddd; border-radius:4px;" oninput="updateTradeSummary()">
+          </div>
+          <label style="font-weight:bold; display:block; margin-bottom:10px;">🏠 Properties:</label>
+          <div id="their-properties" style="max-height:250px; overflow-y:auto; border:1px solid #ddd; padding:10px; border-radius:4px; background:white;">
+            <!-- Checkboxes -->
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div style="margin:20px 0; padding:20px; background:#e8f5e9; border-radius:8px; border-left:4px solid #4CAF50;">
+      <strong style="color:#2c3e50;">📋 Trade Summary:</strong>
+      <div id="trade-summary" style="margin-top:10px; line-height:1.8;"></div>
+    </div>
+    
+    <div style="display:flex; gap:15px; justify-content:center;">
+      <button class="menu-button" style="background:#4CAF50; flex:1; max-width:200px;" onclick="proposeTrade()">📤 Propose Trade</button>
+      <button class="menu-button" style="background:#666; flex:1; max-width:200px;" onclick="closeTradeMenu()">❌ Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Trade Proposal Modal -->
+<div id="trade-proposal-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2001;">
+  <div style="background:white; max-width:500px; margin:80px auto; padding:35px; border-radius:12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+    <h3 style="color:#2c3e50; margin-top:0;">🤝 Trade Proposal</h3>
+    <div id="proposal-details" style="margin:25px 0; text-align:left; line-height:1.8;"></div>
+    <div style="display:flex; gap:15px; justify-content:center; margin-top:30px;">
+      <button class="menu-button" style="background:#4CAF50; padding:15px 30px; font-size:16px;" onclick="acceptTrade()">✅ Accept</button>
+      <button class="menu-button" style="background:#f44336; padding:15px 30px; font-size:16px;" onclick="rejectTrade()">❌ Reject</button>
+    </div>
   </div>
 </div>
 
@@ -1310,6 +1383,10 @@ function updateButtons() {
   rollBtn.style.background = players[current].color;
   rollBtn.style.boxShadow = `0 2px 8px ${players[current].color}88`;
   
+  // Trade button - BUG FIX B
+  let canTrade = rolled && gameMode === 'local' && players.filter(p => !p.isAI).length > 1;
+  document.getElementById('tradeBtn').disabled = !canTrade;
+  
   // Online mode restrictions
   if (gameMode === 'online' && !isMyTurn) {
     document.getElementById('rollBtn').disabled = true;
@@ -1530,7 +1607,7 @@ window.roll = async function() {
   players[current].pos = (players[current].pos + d1 + d2) % 25;
   
   // Check if passed START
-  if (players[current].pos < oldPos && !LUCK.includes(players[current].pos)) {
+  if (players[current].pos < oldPos ) {
     players[current].money += PASS_MONEY;
     log(`💰 ${players[current].name} passed START! +$${PASS_MONEY}`, "log-income");
     beep(600);
@@ -1694,6 +1771,14 @@ window.buy = function() {
   if (gameMode === 'online' && !isMyTurn) return;
   
   let i = players[current].pos;
+  
+  // BUG FIX C: Check if property is already owned
+  if (tiles[i].o !== null) {
+    beep(200, 0.1);
+    log(`❌ Tile ${i} is already owned!`, "log-expense");
+    return;
+  }
+  
   tiles[i].o = current;
   players[current].money -= price(i);
   log(`🏠 ${players[current].name} bought Tile ${i} for $${price(i)}`, "log-action");
@@ -1772,80 +1857,24 @@ window.end = function() {
 
 function switchTurn() {
   current = (current + 1) % numPlayers;
+  rolled = false;
   
-  // Update isMyTurn for online mode
-  if (gameMode === 'online') {
-    if ((isHost && current === 0) || (!isHost && current === 1)) {
-      isMyTurn = true;
-    } else {
-      isMyTurn = false;
-    }
-  }
+  // Close any open modals
+  if (buildMode) toggleBuildMode();
+  if (sellingMode) toggleSellMode();
   
+  draw();
   status();
   updateButtons();
+  updatePanels();
   
-  if (gameMode === 'online') {
-    sendGameState();
-  }
-  
-  if (gameMode === 'ai' && current === 1 && !rolled) {
+  // Trigger AI turn if it's an AI player
+  if (gameMode === 'local' && players[current] && players[current].isAI) {
     setTimeout(aiTurn, 1000);
   }
 }
 
 // AI Logic
-async function aiTurn() {
-  if (gameMode !== 'ai' || current !== 1) return;
-  
-  document.getElementById('ai-thinking').style.display = 'block';
-  await new Promise(r => setTimeout(r, 800));
-  
-  if (!rolled) {
-    await roll();
-    document.getElementById('ai-thinking').style.display = 'none';
-    return;
-  }
-  
-  let i = players[1].pos;
-  let t = tiles[i];
-  
-  // AI decision making
-  if (!LUCK.includes(i)) {
-    // Should buy?
-    if (t.o === null && players[1].money >= price(i) * 1.2) {
-      await new Promise(r => setTimeout(r, 500));
-      buy();
-      document.getElementById('ai-thinking').style.display = 'none';
-      return;
-    }
-    
-    // Should build house on any property?
-    for (let idx = 0; idx < 25; idx++) {
-      if (tiles[idx].o === 1 && canBuildHouse(idx) && players[1].money >= houseCost(idx) * 2) {
-        await new Promise(r => setTimeout(r, 500));
-        buildOnTile(idx, 'house');
-        document.getElementById('ai-thinking').style.display = 'none';
-        return;
-      }
-    }
-    
-    // Should build villa on any property?
-    for (let idx = 0; idx < 25; idx++) {
-      if (tiles[idx].o === 1 && canBuildVilla(idx) && players[1].money >= villaCost(idx) * 1.5) {
-        await new Promise(r => setTimeout(r, 500));
-        buildOnTile(idx, 'villa');
-        document.getElementById('ai-thinking').style.display = 'none';
-        return;
-      }
-    }
-  }
-  
-  // End turn
-  await new Promise(r => setTimeout(r, 500));
-  end();
-  document.getElementById('ai-thinking').style.display = 'none';
-}
 
 function toggleSound() {
   soundEnabled = !soundEnabled;
@@ -1980,6 +2009,370 @@ function resetGame() {
   document.getElementById('build-mode-indicator').style.display = 'none';
 }
 
+
+// ===== AI & TRADING SYSTEM =====
+
+let playerSetup = [];
+let currentTrade = null;
+
+// Player Setup Functions
+function showPlayerSetup() {
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('player-setup-screen').style.display = 'block';
+}
+
+function setupPlayers(count) {
+  playerSetup = [];
+  const slotsDiv = document.getElementById('player-slots');
+  slotsDiv.innerHTML = '<h4 style="color:#2c3e50; margin-bottom:20px;">Configure Each Player:</h4>';
+  
+  const icons = ['🔵', '🔺', '🟩', '🟧'];
+  const colors = ['Blue', 'Red', 'Green', 'Orange'];
+  
+  for (let i = 0; i < count; i++) {
+    playerSetup.push({ type: 'human', name: `Player ${i+1}` });
+    
+    const slot = document.createElement('div');
+    slot.style.cssText = 'display:grid; grid-template-columns:40px 1fr auto; align-items:center; gap:12px; margin:12px 0; padding:15px; background:#f8f9fa; border-radius:8px; border-left:4px solid ' + ['#2196F3','#F44336','#4CAF50','#FF9800'][i];
+    slot.innerHTML = `
+      <span style="font-size:28px;">${icons[i]}</span>
+      <input type="text" id="p${i}-name" value="Player ${i+1}" style="padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
+      <select id="p${i}-type" onchange="updatePlayerType(${i}, this.value)" style="padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px; min-width:120px;">
+        <option value="human">👤 Human</option>
+        <option value="ai">🤖 AI</option>
+      </select>
+    `;
+    slotsDiv.appendChild(slot);
+  }
+  
+  document.getElementById('start-btn').style.display = 'inline-block';
+}
+
+function updatePlayerType(index, type) {
+  playerSetup[index].type = type;
+  const nameInput = document.getElementById(`p${index}-name`);
+  if (type === 'ai') {
+    nameInput.value = `🤖 AI ${index + 1}`;
+  } else {
+    nameInput.value = `Player ${index + 1}`;
+  }
+}
+
+function startLocalWithAI() {
+  // Get player configurations
+  playerSetup.forEach((p, i) => {
+    p.name = document.getElementById(`p${i}-name`).value;
+  });
+  
+  // Set number of players
+  numPlayers = playerSetup.length;
+  
+  // Use existing startGame but customize
+  gameMode = 'local';
+  
+  // Hide screens
+  document.getElementById('player-setup-screen').style.display = 'none';
+  document.getElementById('menu-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+  
+  // Initialize game
+  resetGame();
+  initBoard();
+  
+  // Set player types and names
+  players.forEach((player, i) => {
+    if (playerSetup[i]) {
+      player.name = playerSetup[i].name;
+      player.isAI = playerSetup[i].type === 'ai';
+    }
+  });
+  
+  draw();
+  status();
+  updateButtons();
+  
+  log(`🎮 Game started with ${numPlayers} players!`, 'log-action');
+  
+  // If first player is AI, start their turn
+  if (players[0] && players[0].isAI) {
+    setTimeout(aiTurn, 1000);
+  }
+}
+
+// Enhanced AI Turn Logic
+async function aiTurn() {
+  if (!players[current] || !players[current].isAI || gameMode !== 'local') return;
+  
+  await new Promise(r => setTimeout(r, 500));
+  
+  // Handle jail
+  if (players[current].jailTurns > 0) {
+    if (players[current].money >= BAIL * 2) {
+      payBail();
+      await new Promise(r => setTimeout(r, 800));
+    }
+  }
+  
+  // Roll dice
+  if (!rolled && players[current].jailTurns === 0) {
+    await roll();
+    await new Promise(r => setTimeout(r, 1200));
+  }
+  
+  // Buy property if good value
+  let pos = players[current].pos;
+  if (tiles[pos] && tiles[pos].o === null && !LUCK.includes(pos) && pos !== JAIL_TILE) {
+    let propertyPrice = price(pos);
+    if (players[current].money >= propertyPrice * 2.5) {
+      await new Promise(r => setTimeout(r, 600));
+      buy();
+      await new Promise(r => setTimeout(r, 600));
+    }
+  }
+  
+  // Build houses strategically
+  await aiBuilding();
+  
+  // End turn
+  await new Promise(r => setTimeout(r, 800));
+  end();
+}
+
+async function aiBuilding() {
+  // Find buildable tiles
+  let buildable = [];
+  tiles.forEach((t, idx) => {
+    if (t.o === current && canBuildHouse(idx) && !t.v) {
+      let cost = houseCost(idx);
+      if (players[current].money >= cost * 3) {
+        buildable.push({ idx, cost, rent: baseRent(idx) });
+      }
+    }
+  });
+  
+  if (buildable.length > 0) {
+    // Sort by rent value (build on valuable properties first)
+    buildable.sort((a, b) => b.rent - a.rent);
+    
+    // Try to build on best property
+    for (let prop of buildable.slice(0, 2)) {
+      if (canBuildHouseEvenly(prop.idx)) {
+        buildOnTile(prop.idx, 'house');
+        await new Promise(r => setTimeout(r, 700));
+        break;
+      }
+    }
+  }
+}
+
+// Trading System
+function openTradeMenu() {
+  if (gameMode !== 'local') {
+    alert('❌ Trading only available in local multiplayer!');
+    return;
+  }
+  
+  // Count human players
+  const humanPlayers = players.filter((p, idx) => idx !== current && (!p.isAI || p.isAI === false));
+  
+  if (humanPlayers.length === 0) {
+    alert('❌ No other human players to trade with!\n\n(AI players don\'t trade)');
+    return;
+  }
+  
+  // Populate partner selection
+  const partnerSelect = document.getElementById('trade-partner');
+  partnerSelect.innerHTML = '';
+  
+  players.forEach((p, idx) => {
+    if (idx !== current && !p.isAI) {
+      const option = document.createElement('option');
+      option.value = idx;
+      option.textContent = p.name;
+      partnerSelect.appendChild(option);
+    }
+  });
+  
+  updateTradePartner();
+  document.getElementById('trade-modal').style.display = 'block';
+}
+
+function updateTradePartner() {
+  const partnerId = parseInt(document.getElementById('trade-partner').value);
+  
+  // Populate your properties
+  const yourProps = document.getElementById('your-properties');
+  yourProps.innerHTML = '';
+  
+  let hasProps = false;
+  tiles.forEach((t, idx) => {
+    if (t.o === current) {
+      hasProps = true;
+      const label = document.createElement('label');
+      label.style.display = 'block';
+      label.style.margin = '8px 0';
+      label.style.padding = '6px';
+      label.style.cursor = 'pointer';
+      label.innerHTML = `
+        <input type="checkbox" class="your-prop-check" value="${idx}" onchange="updateTradeSummary()">
+        <strong>Tile ${idx}</strong> (${t.h}🏠${t.v ? '+🏰' : ''}) - $${price(idx)}
+      `;
+      yourProps.appendChild(label);
+    }
+  });
+  
+  if (!hasProps) {
+    yourProps.innerHTML = '<em style="color:#999;">No properties to trade</em>';
+  }
+  
+  // Populate their properties
+  const theirProps = document.getElementById('their-properties');
+  theirProps.innerHTML = '';
+  
+  let hasTheirProps = false;
+  tiles.forEach((t, idx) => {
+    if (t.o === partnerId) {
+      hasTheirProps = true;
+      const label = document.createElement('label');
+      label.style.display = 'block';
+      label.style.margin = '8px 0';
+      label.style.padding = '6px';
+      label.style.cursor = 'pointer';
+      label.innerHTML = `
+        <input type="checkbox" class="their-prop-check" value="${idx}" onchange="updateTradeSummary()">
+        <strong>Tile ${idx}</strong> (${t.h}🏠${t.v ? '+🏰' : ''}) - $${price(idx)}
+      `;
+      theirProps.appendChild(label);
+    }
+  });
+  
+  if (!hasTheirProps) {
+    theirProps.innerHTML = '<em style="color:#999;">No properties available</em>';
+  }
+  
+  updateTradeSummary();
+}
+
+function updateTradeSummary() {
+  const yourCash = parseInt(document.getElementById('your-cash').value) || 0;
+  const theirCash = parseInt(document.getElementById('their-cash').value) || 0;
+  
+  const yourProps = Array.from(document.querySelectorAll('.your-prop-check:checked')).map(c => parseInt(c.value));
+  const theirProps = Array.from(document.querySelectorAll('.their-prop-check:checked')).map(c => parseInt(c.value));
+  
+  let summary = '<div style="color:#2c3e50;"><strong>You give:</strong><br>';
+  if (yourCash > 0) summary += `💰 $${yourCash}<br>`;
+  yourProps.forEach(p => summary += `🏠 Tile ${p}<br>`);
+  if (yourCash === 0 && yourProps.length === 0) summary += '<em style="color:#999;">Nothing</em><br>';
+  
+  summary += '<br><strong>You receive:</strong><br>';
+  if (theirCash > 0) summary += `💰 $${theirCash}<br>`;
+  theirProps.forEach(p => summary += `🏠 Tile ${p}<br>`);
+  if (theirCash === 0 && theirProps.length === 0) summary += '<em style="color:#999;">Nothing</em>';
+  summary += '</div>';
+  
+  document.getElementById('trade-summary').innerHTML = summary;
+}
+
+function proposeTrade() {
+  const partnerId = parseInt(document.getElementById('trade-partner').value);
+  const yourCash = parseInt(document.getElementById('your-cash').value) || 0;
+  const theirCash = parseInt(document.getElementById('their-cash').value) || 0;
+  const yourProps = Array.from(document.querySelectorAll('.your-prop-check:checked')).map(c => parseInt(c.value));
+  const theirProps = Array.from(document.querySelectorAll('.their-prop-check:checked')).map(c => parseInt(c.value));
+  
+  // Validation
+  if (yourCash === 0 && yourProps.length === 0 && theirCash === 0 && theirProps.length === 0) {
+    alert('❌ Empty trade! Add something to the offer.');
+    return;
+  }
+  
+  if (yourCash > players[current].money) {
+    alert(`❌ You don't have $${yourCash}!\nYou only have $${players[current].money}`);
+    return;
+  }
+  
+  if (theirCash > players[partnerId].money) {
+    alert(`❌ ${players[partnerId].name} doesn't have $${theirCash}!\nThey only have $${players[partnerId].money}`);
+    return;
+  }
+  
+  // Create trade object
+  currentTrade = {
+    from: current,
+    to: partnerId,
+    fromCash: yourCash,
+    toCash: theirCash,
+    fromProps: yourProps,
+    toProps: theirProps
+  };
+  
+  document.getElementById('trade-modal').style.display = 'none';
+  showTradeProposal();
+}
+
+function showTradeProposal() {
+  const trade = currentTrade;
+  let details = `<p style="font-size:16px; text-align:center; margin-bottom:20px;">
+    <strong style="color:#2196F3;">${players[trade.from].name}</strong> wants to trade with 
+    <strong style="color:#F44336;">${players[trade.to].name}</strong>
+  </p>`;
+  
+  details += '<div style="background:#e3f2fd; padding:15px; border-radius:8px; margin:15px 0; border-left:4px solid #2196F3;">';
+  details += `<strong style="color:#1976d2;">${players[trade.from].name} gives:</strong><br>`;
+  if (trade.fromCash > 0) details += `💰 $${trade.fromCash}<br>`;
+  trade.fromProps.forEach(p => details += `🏠 Tile ${p}<br>`);
+  if (trade.fromCash === 0 && trade.fromProps.length === 0) details += '<em>Nothing</em><br>';
+  details += '</div>';
+  
+  details += '<div style="background:#ffebee; padding:15px; border-radius:8px; margin:15px 0; border-left:4px solid #F44336;">';
+  details += `<strong style="color:#c62828;">${players[trade.to].name} gives:</strong><br>`;
+  if (trade.toCash > 0) details += `💰 $${trade.toCash}<br>`;
+  trade.toProps.forEach(p => details += `🏠 Tile ${p}<br>`);
+  if (trade.toCash === 0 && trade.toProps.length === 0) details += '<em>Nothing</em>';
+  details += '</div>';
+  
+  document.getElementById('proposal-details').innerHTML = details;
+  document.getElementById('trade-proposal-modal').style.display = 'block';
+}
+
+function acceptTrade() {
+  const trade = currentTrade;
+  
+  // Execute trade
+  players[trade.from].money -= trade.fromCash;
+  players[trade.from].money += trade.toCash;
+  players[trade.to].money -= trade.toCash;
+  players[trade.to].money += trade.fromCash;
+  
+  // Transfer properties
+  trade.fromProps.forEach(idx => {
+    tiles[idx].o = trade.to;
+  });
+  
+  trade.toProps.forEach(idx => {
+    tiles[idx].o = trade.from;
+  });
+  
+  log(`🤝 Trade completed: ${players[trade.from].name} ↔ ${players[trade.to].name}!`, 'log-action');
+  
+  document.getElementById('trade-proposal-modal').style.display = 'none';
+  currentTrade = null;
+  
+  draw();
+  updatePanels();
+}
+
+function rejectTrade() {
+  log(`❌ ${players[currentTrade.to].name} rejected the trade proposal`, 'log-action');
+  document.getElementById('trade-proposal-modal').style.display = 'none';
+  currentTrade = null;
+}
+
+function closeTradeMenu() {
+  document.getElementById('trade-modal').style.display = 'none';
+}
+
 // Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
   // Don't trigger if typing in an input field
@@ -2029,6 +2422,13 @@ document.addEventListener('keydown', function(e) {
         toggleSellMode();
       }
       break;
+	  case 't':
+	  e.preventDefault();
+	  let tradeBtn = document.getElementById('tradeBtn');
+	  if (tradeBtn && !tradeBtn.disabled) {
+		openTradeMenu();
+	  }
+	  break;
       
     case 'h':
       e.preventDefault();
