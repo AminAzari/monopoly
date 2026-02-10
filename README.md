@@ -1,5 +1,7 @@
 # 🎲 Monopoly Classic - 8×5 Board
 
+Play live at: https://mono110.netlify.app
+
 A fully-featured digital Monopoly game with local multiplayer, online multiplayer, and AI opponent support. Built with vanilla JavaScript and peer-to-peer networking.
 
 ## 🎮 Game Modes
