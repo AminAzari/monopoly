@@ -2,14 +2,10 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Mini Monopoly 5×5 - Multiplayer Edition</title>
+<title>Monopoly Classic - 8×5 Board</title>
 <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
-
 <style>
-* {
-  box-sizing: border-box;
-}
-
+* { box-sizing: border-box; }
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -18,2374 +14,1550 @@ body {
   padding: 20px;
   min-height: 100vh;
 }
+h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px; }
+#status { color: white; font-size: 18px; font-weight: bold; margin-bottom: 15px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
 
-h2 {
-  color: white;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-  margin-bottom: 10px;
-}
-
-#status {
-  color: white;
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 15px;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
-
-/* Menu Screen */
-#menu-screen {
-  max-width: 600px;
-  margin: 50px auto;
-  background: white;
-  padding: 40px;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
-
-#menu-screen h3 {
-  color: #2c3e50;
-  margin-bottom: 30px;
-  font-size: 24px;
-}
+#menu-screen { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+#menu-screen h3 { color: #2c3e50; margin-bottom: 30px; font-size: 24px; }
 
 .menu-button {
-  display: block;
-  width: 100%;
-  padding: 20px;
-  margin: 15px 0;
+  display: block; width: 100%; padding: 20px; margin: 15px 0;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 18px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold;
+  cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
+.menu-button:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+.menu-button:active { transform: translateY(0); }
+.menu-button.ai { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.menu-button.online { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.menu-button.local { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.menu-button .subtitle { font-size: 14px; opacity: 0.9; margin-top: 5px; font-weight: normal; }
 
-.menu-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-}
-
-.menu-button:active {
-  transform: translateY(0);
-}
-
-.menu-button.ai {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.menu-button.online {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.menu-button.local {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-}
-
-.menu-button .subtitle {
-  font-size: 14px;
-  opacity: 0.9;
-  margin-top: 5px;
-  font-weight: normal;
-}
-
-/* Player Count Selection */
-#player-count-screen {
-  display: none;
-  max-width: 500px;
-  margin: 50px auto;
-  background: white;
-  padding: 40px;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
-
-#player-count-screen h3 {
-  color: #2c3e50;
-  margin-bottom: 30px;
-}
-
+#player-count-screen { display: none; max-width: 500px; margin: 50px auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+#player-count-screen h3 { color: #2c3e50; margin-bottom: 30px; }
 .player-count-btn {
-  display: inline-block;
-  width: 80px;
-  padding: 20px;
-  margin: 10px;
+  display: inline-block; width: 80px; padding: 20px; margin: 10px;
   background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 24px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: transform 0.2s;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  color: white; border: none; border-radius: 12px; font-size: 24px; font-weight: bold;
+  cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
+.player-count-btn:hover { transform: translateY(-3px); }
 
-.player-count-btn:hover {
-  transform: translateY(-3px);
-}
+#online-lobby { display: none; max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+#online-lobby h3 { color: #2c3e50; margin-bottom: 20px; }
+.lobby-section { margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+.lobby-input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+.room-code-display { font-size: 32px; font-weight: bold; color: #667eea; letter-spacing: 4px; padding: 15px; background: white; border-radius: 8px; margin: 15px 0; }
 
-/* Online Lobby */
-#online-lobby {
-  display: none;
-  max-width: 500px;
-  margin: 50px auto;
-  background: white;
-  padding: 30px;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-}
+.connection-status { padding: 10px; border-radius: 6px; margin: 10px 0; font-weight: bold; }
+.status-waiting { background: #fff3cd; color: #856404; }
+.status-connected { background: #d4edda; color: #155724; }
+.status-error { background: #f8d7da; color: #721c24; }
 
-#online-lobby h3 {
-  color: #2c3e50;
-  margin-bottom: 20px;
-}
+#game-screen { display: none; }
+#wrap { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
 
-.lobby-section {
-  margin: 20px 0;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.lobby-input {
-  width: 100%;
-  padding: 12px;
-  margin: 10px 0;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.room-code-display {
-  font-size: 32px;
-  font-weight: bold;
-  color: #667eea;
-  letter-spacing: 4px;
-  padding: 15px;
-  background: white;
-  border-radius: 8px;
-  margin: 15px 0;
-}
-
-.connection-status {
-  padding: 10px;
-  border-radius: 6px;
-  margin: 10px 0;
-  font-weight: bold;
-}
-
-.status-waiting {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.status-connected {
-  background: #d4edda;
-  color: #155724;
-}
-
-.status-error {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-#game-screen {
-  display: none;
-}
-
-#wrap {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-/* Mobile-friendly: stack panels above board on small screens */
 @media (max-width: 768px) {
-  #board {
-    width: 90vw !important;
-    height: 90vw !important;
-    max-width: 540px;
-    max-height: 540px;
-  }
-  
-  .controls {
-    width: 90% !important;
-    max-width: 540px;
-  }
-  
-  .controls button {
-    font-size: 12px !important;
-    padding: 8px 12px !important;
-  }
+  #board { width: 90vw !important; height: 90vw !important; max-width: 540px; max-height: 540px; }
+  .controls { width: 90% !important; max-width: 540px; }
+  .controls button { font-size: 12px !important; padding: 8px 12px !important; }
 }
 
 #board {
-  width: 540px;
-  height: 540px;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(5, 1fr);
-  gap: 6px;
-  background: #2c3e50;
-  padding: 10px;
-  border-radius: 12px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+  display: grid; gap: 6px; background: #2c3e50; padding: 10px;
+  border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.3);
 }
 
 .tile {
-  border: 2px solid #34495e;
-  background: white;
-  font-size: 10px;
-  position: relative;
-  padding: 6px 4px;
-  border-radius: 6px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  overflow: hidden;
+  border: 2px solid #34495e; background: white; font-size: 10px;
+  position: relative; padding: 6px 4px; border-radius: 6px;
+  transition: transform 0.2s, box-shadow 0.2s; overflow: hidden;
 }
-
-.tile:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-.tile-header {
-  font-weight: bold;
-  margin-bottom: 3px;
-  padding: 2px;
-  border-radius: 3px;
-  font-size: 11px;
-}
+.tile:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+.tile-header { font-weight: bold; margin-bottom: 3px; padding: 2px; border-radius: 3px; font-size: 11px; }
 
 .row-0 { background: #8d6e63; color: white; }
 .row-1 { background: #81d4fa; color: #333; }
 .row-2 { background: #f48fb1; color: white; }
 .row-3 { background: #ffb74d; color: #333; }
 .row-4 { background: #ef5350; color: white; }
+.row-5 { background: #ba68c8; color: white; }
+.row-6 { background: #ffa726; color: white; }
+.row-7 { background: #42a5f5; color: white; }
 
-.luck-tile {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%) !important;
-}
+.luck-tile { background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%) !important; }
+.jail-tile { background: linear-gradient(135deg, #607d8b 0%, #90a4ae 100%) !important; }
+.rail-tile { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important; color: white !important; }
+.rail-tile .tile-header { background: #e94560 !important; color: white !important; }
 
-.jail-tile {
-  background: linear-gradient(135deg, #607d8b 0%, #90a4ae 100%) !important;
-}
+.utility-tile { background: linear-gradient(135deg, #26c6da 0%, #00acc1 100%) !important; color: white !important; }
+.utility-tile .tile-header { background: #00838f !important; color: white !important; }
 
-.connection-line {
-  position: absolute;
-  background: currentColor;
-  opacity: 0.4;
-  pointer-events: none;
-  z-index: 10;
-}
+.go-tile { background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%) !important; }
+.gotojail-tile { background: linear-gradient(135deg, #ffebee 0%, #ef9a9a 100%) !important; }
+.freeparking-tile { background: linear-gradient(135deg, #f3e5f5 0%, #ce93d8 100%) !important; }
+.tax-tile { background: linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%) !important; }
 
-.connection-right {
-  right: -3px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 40%;
-}
+.tile.sellable { cursor: pointer; box-shadow: 0 0 10px rgba(76, 175, 80, 0.8) !important; border: 3px solid #4CAF50 !important; }
+.tile.sellable:hover { transform: translateY(-4px) !important; box-shadow: 0 6px 12px rgba(76, 175, 80, 0.9) !important; }
+.tile.buildable { cursor: pointer; box-shadow: 0 0 10px rgba(255, 152, 0, 0.8) !important; border: 3px solid #FF9800 !important; }
+.tile.buildable:hover { transform: translateY(-4px) !important; box-shadow: 0 6px 12px rgba(255, 152, 0, 0.9) !important; }
 
-.connection-down {
-  bottom: -3px;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 6px;
-  width: 40%;
+.pawn {
+  display: inline-block; width: 16px; height: 16px; border-radius: 50%;
+  margin: 2px; border: 2px solid #333; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  animation: pawnAppear 0.3s ease;
 }
+@keyframes pawnAppear { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-.tile.sellable {
-  cursor: pointer;
-  box-shadow: 0 0 10px rgba(76, 175, 80, 0.8) !important;
-  border: 3px solid #4CAF50 !important;
+.house {
+  width: 14px; height: 14px; background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+  display: inline-block; margin: 1px; border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3); animation: buildingAppear 0.3s ease;
 }
-
-.tile.sellable:hover {
-  transform: translateY(-4px) !important;
-  box-shadow: 0 6px 12px rgba(76, 175, 80, 0.9) !important;
+.villa {
+  width: 20px; height: 16px; background: linear-gradient(135deg, #e53935 0%, #ef5350 100%);
+  display: inline-block; margin: 1px; border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4); animation: buildingAppear 0.3s ease;
 }
-
-.tile.buildable {
-  cursor: pointer;
-  box-shadow: 0 0 10px rgba(255, 152, 0, 0.8) !important;
-  border: 3px solid #FF9800 !important;
-}
-
-.tile.buildable:hover {
-  transform: translateY(-4px) !important;
-  box-shadow: 0 6px 12px rgba(255, 152, 0, 0.9) !important;
-}
-
-.tile-info {
-  line-height: 1.3;
-}
-
-.token-container {
-  position: absolute;
-  bottom: 4px;
-  left: 4px;
-  right: 4px;
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.token {
-  animation: tokenPop 0.3s ease-out;
-}
-
-@keyframes tokenPop {
-  0% { transform: scale(0); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-.circle {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid black;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.triangle {
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 16px solid;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-}
-
-.square {
-  width: 16px;
-  height: 16px;
-  border: 2px solid black;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.diamond {
-  width: 16px;
-  height: 16px;
-  transform: rotate(45deg);
-  border: 2px solid black;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
+@keyframes buildingAppear { from { transform: scale(0) rotate(0deg); } to { transform: scale(1) rotate(360deg); } }
 
 .controls {
-  margin: 15px auto;
-  text-align: center;
-  max-width: 600px;
+  background: white; padding: 20px; border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 540px; max-width: 90%;
 }
-
-button {
-  padding: 10px 16px;
-  margin: 4px;
-  background: #3498db;
-  border: none;
-  color: white;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
+.controls button {
+  padding: 12px 20px; margin: 5px; font-size: 14px; font-weight: bold;
+  border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
+.controls button:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+.controls button:not(:disabled):active { transform: translateY(0); }
+.controls button:disabled { opacity: 0.4; cursor: not-allowed; }
 
-button:hover:not(:disabled) {
-  background: #2980b9;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+#rollBtn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+#buyBtn { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; }
+#endBtn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+#sellBtn { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
+#buildBtn { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; }
+#bailBtn { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333; }
+#tradeBtn { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+
+#panel {
+  background: white; padding: 15px; border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: left;
+  max-width: 300px; width: 100%;
 }
 
-button:active:not(:disabled) {
-  transform: translateY(0);
+.player-card {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 12px; margin: 8px 0; border-radius: 8px;
+  border-left: 4px solid; transition: transform 0.2s;
 }
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-button.active {
-  background: #27ae60;
-}
-
-#rollBtn {
-  font-size: 16px;
-  padding: 12px 24px;
-  transition: all 0.2s;
-}
-
-#rollBtn:hover:not(:disabled) {
-  filter: brightness(0.9);
-}
-
-#endBtn {
-  background: #16a085;
-  font-size: 16px;
-  padding: 12px 24px;
-}
-
-#endBtn:hover:not(:disabled) {
-  background: #138871;
-}
-
-#buyBtn {
-  background: #27ae60;
-}
-
-#buyBtn:hover:not(:disabled) {
-  background: #229954;
-}
-
-#houseBtn {
-  background: #f39c12;
-}
-
-#houseBtn:hover:not(:disabled) {
-  background: #d68910;
-}
-
-#villaBtn {
-  background: #9b59b6;
-}
-
-#villaBtn:hover:not(:disabled) {
-  background: #8e44ad;
-}
-
-#sellBtn {
-  background: #e67e22;
-}
-
-#sellBtn:hover:not(:disabled) {
-  background: #d35400;
-}
-
-#bailBtn {
-  background: #34495e;
-}
-
-#bailBtn:hover:not(:disabled) {
-  background: #2c3e50;
-}
+.player-card.active { transform: translateX(5px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
 
 #log {
-  background: rgba(255,255,255,0.95);
-  border: 2px solid #333;
-  height: 180px;
-  overflow-y: auto;
-  text-align: left;
-  padding: 12px;
-  margin: 15px auto;
-  max-width: 600px;
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.6;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  background: white; padding: 15px; border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: left;
+  max-width: 400px; width: 100%; height: 300px; overflow-y: auto; font-size: 13px;
 }
 
-.log-action {
-  color: #2c3e50;
-  font-weight: 600;
+.log-entry { padding: 6px; margin: 3px 0; border-radius: 4px; }
+.log-expense { background: #ffebee; color: #c62828; }
+.log-income { background: #e8f5e9; color: #2e7d32; }
+.log-action { background: #e3f2fd; color: #1565c0; }
+
+.modal {
+  display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+  width: 100%; height: 100%; background: rgba(0,0,0,0.7); animation: fadeIn 0.3s;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-content {
+  background: white; margin: 5% auto; padding: 30px; border-radius: 16px;
+  max-width: 700px; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4); animation: slideDown 0.3s ease;
+}
+@keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal-close {
+  float: right; font-size: 32px; font-weight: bold; color: #aaa;
+  cursor: pointer; line-height: 20px; transition: color 0.2s;
+}
+.modal-close:hover { color: #333; }
+
+.trade-section { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+.trade-section h4 { margin-top: 0; color: #2c3e50; }
+
+.property-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px; margin: 10px 0;
 }
 
-.log-income {
-  color: #27ae60;
-  font-weight: 600;
+.property-item {
+  padding: 10px; border: 2px solid #ddd; border-radius: 6px;
+  cursor: pointer; transition: all 0.2s; background: white;
+}
+.property-item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+.property-item.selected { border-color: #667eea; background: #e8eaf6; }
+
+.money-input {
+  width: 100%; padding: 10px; font-size: 16px; border: 2px solid #ddd;
+  border-radius: 6px; margin: 5px 0;
 }
 
-.log-expense {
-  color: #e74c3c;
-  font-weight: 600;
+.trade-buttons { display: flex; gap: 10px; margin-top: 20px; }
+.trade-buttons button {
+  flex: 1; padding: 15px; font-size: 16px; font-weight: bold;
+  border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s;
 }
 
-#ai-thinking {
-  display: none;
-  color: white;
-  font-size: 16px;
-  margin: 10px 0;
-  padding: 10px;
-  background: rgba(0,0,0,0.3);
-  border-radius: 8px;
-  max-width: 600px;
-  margin: 10px auto;
+.trade-btn-send { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; }
+.trade-btn-cancel { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+
+#auction-modal {
+  display: none; position: fixed; z-index: 2000; left: 0; top: 0;
+  width: 100%; height: 100%; background: rgba(0,0,0,0.85); animation: fadeIn 0.3s;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+#auction-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: 3% auto; padding: 0; border-radius: 20px; max-width: 600px;
+  box-shadow: 0 10px 50px rgba(0,0,0,0.5); overflow: hidden; animation: slideDown 0.3s ease;
 }
 
-.thinking {
-  animation: pulse 1s infinite;
+.auction-header {
+  background: rgba(255,255,255,0.15); padding: 25px; text-align: center;
+  color: white; backdrop-filter: blur(10px);
+}
+.auction-header h2 { margin: 0 0 10px 0; font-size: 28px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+.auction-tile-name { font-size: 20px; font-weight: bold; margin: 5px 0; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+.auction-price { font-size: 16px; opacity: 0.9; }
+.auction-current-bid {
+  font-size: 32px; font-weight: bold; margin: 15px 0; padding: 15px;
+  background: rgba(255,255,255,0.2); border-radius: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
-/* Build Mode Indicator */
-#build-mode-indicator {
-  display: none;
-  background: rgba(255, 152, 0, 0.95);
-  color: white;
-  padding: 12px;
-  border-radius: 8px;
-  margin: 10px auto;
-  max-width: 600px;
-  font-weight: bold;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+.auction-body { background: white; padding: 25px; }
+.auction-timer { width: 100%; height: 8px; background: #ecf0f1; border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
+#auction-timer-bar { height: 100%; background: linear-gradient(90deg, #27ae60, #f39c12); transition: width 1s linear; }
+
+.auction-players-grid { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+.auction-player-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px; background: #f8f9fa; border-radius: 8px;
+  border: 2px solid transparent; transition: all 0.3s;
 }
+.auction-player-row.current-bidder { border-color: #e74c3c; background: #fff5f5; box-shadow: 0 0 15px rgba(231, 76, 60, 0.3); }
+.auction-player-row.passed { opacity: 0.5; background: #ecf0f1; }
+.auction-player-row.ai-row { background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); }
+
+.auction-player-name { font-weight: bold; font-size: 16px; }
+.auction-player-cash { font-size: 14px; color: #7f8c8d; margin-top: 3px; }
+.auction-player-status { font-size: 14px; font-weight: bold; padding: 5px 10px; border-radius: 5px; background: #e8f5e9; color: #27ae60; }
+.auction-player-status.out { background: #ffebee; color: #c62828; }
+
+.auction-bid-btn {
+  padding: 10px 20px; font-size: 14px; font-weight: bold; border: none;
+  border-radius: 6px; cursor: pointer; transition: all 0.2s;
+}
+.auction-bid-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-bid { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; }
+.btn-bid:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(67, 233, 123, 0.4); }
+
+.btn-pass { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+.btn-pass:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(240, 147, 251, 0.4); }
+
+.auction-log {
+  margin-top: 20px; padding: 15px; background: #ecf0f1; border-radius: 8px;
+  max-height: 150px; overflow-y: auto; font-size: 13px; color: #2c3e50;
+}
+.auction-log-title { font-weight: bold; margin-bottom: 10px; color: #34495e; }
+
+.trade-offer-modal {
+  display: none; position: fixed; z-index: 3000; left: 0; top: 0;
+  width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+}
+
+.trade-offer-content {
+  background: white; margin: 10% auto; padding: 30px; border-radius: 16px;
+  max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); animation: slideDown 0.3s ease;
+}
+
+.trade-offer-section { margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+
+.trade-offer-buttons { display: flex; gap: 10px; margin-top: 20px; }
+.trade-offer-buttons button {
+  flex: 1; padding: 15px; font-size: 16px; font-weight: bold;
+  border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+}
+
+.accept-btn { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; }
+.reject-btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
 </style>
-
 </head>
 <body>
 
-<!-- Menu Screen -->
 <div id="menu-screen">
-  <h3>🎲 Mini Monopoly 5×5</h3>
-  <button class="menu-button local" onclick="showPlayerSetup()">
-    🏠 Local Play
-    <div class="subtitle">2-4 players (Human or AI)</div>
+  <h3>🎲 Monopoly Classic</h3>
+  <button class="menu-button ai" onclick="selectGameMode('ai')">
+    🤖 Play vs AI
+    <div class="subtitle">Challenge computer opponents</div>
   </button>
-  <button class="menu-button online" onclick="showOnlineLobby()">
-    🌐 Online Play
-    <div class="subtitle">Play with friends remotely</div>
+  <button class="menu-button online" onclick="selectGameMode('online')">
+    🌐 Play Online
+    <div class="subtitle">Connect with friends remotely</div>
+  </button>
+  <button class="menu-button local" onclick="selectGameMode('local')">
+    👥 Local Multiplayer
+    <div class="subtitle">Pass and play on one device</div>
   </button>
 </div>
 
-<!-- Player Setup Screen -->
-<div id="player-setup-screen" style="display:none; max-width:700px; margin:50px auto; background:white; padding:40px; border-radius:16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
-  <h3>Setup Game</h3>
-  
-  <p><strong>Number of Players:</strong></p>
-  <div style="margin:20px 0;">
-    <button class="player-count-btn" onclick="setupPlayers(2)">2</button>
-    <button class="player-count-btn" onclick="setupPlayers(3)">3</button>
-    <button class="player-count-btn" onclick="setupPlayers(4)">4</button>
+<div id="player-count-screen">
+  <h3>How many players?</h3>
+  <div>
+    <button class="player-count-btn" onclick="startGame(2)">2</button>
+    <button class="player-count-btn" onclick="startGame(3)">3</button>
+    <button class="player-count-btn" onclick="startGame(4)">4</button>
   </div>
-  
-  <div id="player-slots" style="margin:30px 0;"></div>
-  
-  <button class="menu-button" id="start-btn" style="display:none;" onclick="startLocalWithAI()">▶️ Start Game</button>
-  <button class="menu-button" onclick="backToMenu()">⬅️ Back</button>
+  <button class="menu-button" onclick="backToMenu()" style="margin-top: 30px;">← Back</button>
 </div>
 
-<!-- Online Lobby -->
 <div id="online-lobby">
   <h3>🌐 Online Lobby</h3>
-  
   <div class="lobby-section">
     <h4>Host a Game</h4>
-    <button class="menu-button" onclick="hostGame()">Create Room</button>
-    <div id="room-code-section" style="display: none;">
-      <p>Share this code with your friend:</p>
-      <div class="room-code-display" id="room-code"></div>
-      <div class="connection-status status-waiting" id="host-status">
-        Waiting for opponent to join...
-      </div>
+    <button class="menu-button" onclick="createRoom()">Create Room</button>
+    <div id="room-code-section" style="display:none; margin-top:15px;">
+      <p><strong>Your Room Code:</strong></p>
+      <div class="room-code-display" id="room-code">----</div>
+      <p style="color:#7f8c8d; font-size:14px;">Share this code with your friend!</p>
     </div>
   </div>
-  
   <div class="lobby-section">
     <h4>Join a Game</h4>
-    <input 
-      type="text" 
-      class="lobby-input" 
-      id="join-code-input" 
-      placeholder="Enter room code"
-      maxlength="6"
-    >
-    <button class="menu-button" onclick="joinGame()">Join Room</button>
-    <div class="connection-status" id="join-status" style="display: none;"></div>
+    <input type="text" class="lobby-input" id="join-code-input" placeholder="Enter Room Code" maxlength="4">
+    <button class="menu-button" onclick="joinRoom()">Join Room</button>
   </div>
-  
-  <button class="menu-button" onclick="backToMenu()">⬅️ Back to Menu</button>
+  <div id="connection-status" class="connection-status" style="display:none;">Connecting...</div>
+  <button class="menu-button" onclick="backToMenu()" style="margin-top:20px;">← Back to Menu</button>
 </div>
 
-<!-- Game Screen -->
 <div id="game-screen">
-  <h2>🎲 Mini Monopoly 5×5</h2>
+  <h2>Monopoly Classic</h2>
   <div id="status"></div>
-  <div id="ai-thinking" class="thinking">🤖 AI is thinking...</div>
-  <div id="build-mode-indicator"></div>
-
   <div id="wrap">
+    <div id="panel"></div>
     <div id="board"></div>
+    <div id="log"></div>
   </div>
-
-<div class="controls">
-  <button id="rollBtn" onclick="roll()">🎲 Roll [SPACE]</button>
-  <button id="bailBtn" class="warning-btn" onclick="payBail()">🔓 Bail [B]</button>
-  <button id="buyBtn" class="action-btn" onclick="buy()">💰 Buy [B]</button>
-  <button id="buildBtn" class="action-btn" onclick="toggleBuildMode()">🏗️ Build [H]</button>
-  <button id="sellBtn" class="danger-btn" onclick="toggleSellMode()">💸 Sell [S]</button>
-  <button id="tradeBtn" class="action-btn" onclick="openTradeMenu()">🤝 Trade [T]</button>
-  <button id="endBtn" onclick="end()">✅ End [ENTER]</button>
-</div>
-
-  <div id="log"></div>
-
   <div class="controls">
-    <button id="soundBtn" onclick="toggleSound()" class="active">🔊 Sound ON</button>
-    <button onclick="exportLogs()">📋 Export Logs</button>
-    <button onclick="forfeit()">🏳️ Forfeit</button>
+    <button id="rollBtn" onclick="roll()">🎲 Roll Dice (Space)</button>
+    <button id="buyBtn" onclick="buy()" disabled>💰 Buy Property (B)</button>
+    <button id="endBtn" onclick="end()" disabled>✅ End Turn (Enter)</button>
+    <button id="sellBtn" onclick="toggleSellMode()">🏷️ Sell Mode (S)</button>
+    <button id="buildBtn" onclick="enterBuildMode('house')">🏠 Build (H/V)</button>
+    <button id="bailBtn" onclick="payBail()" style="display:none;">💸 Pay Bail $50 (B)</button>
+    <button id="tradeBtn" onclick="openTradeMenu()">🤝 Trade (T)</button>
   </div>
 </div>
 
-
-<!-- Trade Modal -->
-<div id="trade-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; overflow-y:auto;">
-  <div style="background:white; max-width:700px; margin:30px auto; padding:30px; border-radius:12px;">
-    <h3 style="color:#2c3e50; margin-top:0;">🤝 Trade Center</h3>
-    
-    <div style="margin:20px 0;">
-      <label style="font-weight:bold;">Trade with:</label>
-      <select id="trade-partner" onchange="updateTradePartner()" style="width:200px; padding:8px; margin-left:10px; border:1px solid #ddd; border-radius:4px; font-size:14px;">
-        <!-- Populated dynamically -->
-      </select>
+<div id="trade-modal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeTradeMenu()">&times;</span>
+    <h2>🤝 Propose Trade</h2>
+    <div class="trade-section">
+      <h4>Select Trading Partner</h4>
+      <div id="trade-partner-list"></div>
     </div>
-    
-    <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:15px; margin:25px 0;">
-      <!-- Your Offer -->
-      <div style="border:3px solid #2196F3; padding:20px; border-radius:10px; background:#f8f9fa;">
-        <h4 style="margin-top:0; color:#2196F3;">Your Offer</h4>
-        <div id="your-offer">
-          <div style="margin-bottom:15px;">
-            <label style="font-weight:bold;">💰 Cash: $</label>
-            <input type="number" id="your-cash" value="0" min="0" style="width:100px; padding:6px; border:1px solid #ddd; border-radius:4px;" oninput="updateTradeSummary()">
-          </div>
-          <label style="font-weight:bold; display:block; margin-bottom:10px;">🏠 Properties:</label>
-          <div id="your-properties" style="max-height:250px; overflow-y:auto; border:1px solid #ddd; padding:10px; border-radius:4px; background:white;">
-            <!-- Checkboxes -->
-          </div>
-        </div>
-      </div>
-      
-      <div style="display:flex; align-items:center; font-size:32px; color:#666;">
-        ↔
-      </div>
-      
-      <!-- Their Offer -->
-      <div style="border:3px solid #F44336; padding:20px; border-radius:10px; background:#f8f9fa;">
-        <h4 style="margin-top:0; color:#F44336;">Their Offer</h4>
-        <div id="their-offer">
-          <div style="margin-bottom:15px;">
-            <label style="font-weight:bold;">💰 Cash: $</label>
-            <input type="number" id="their-cash" value="0" min="0" style="width:100px; padding:6px; border:1px solid #ddd; border-radius:4px;" oninput="updateTradeSummary()">
-          </div>
-          <label style="font-weight:bold; display:block; margin-bottom:10px;">🏠 Properties:</label>
-          <div id="their-properties" style="max-height:250px; overflow-y:auto; border:1px solid #ddd; padding:10px; border-radius:4px; background:white;">
-            <!-- Checkboxes -->
-          </div>
-        </div>
-      </div>
+    <div class="trade-section">
+      <h4>You Give</h4>
+      <label>Money: $<input type="number" id="trade-give-money" class="money-input" value="0" min="0"></label>
+      <div id="trade-give-properties" class="property-grid"></div>
     </div>
-    
-    <div style="margin:20px 0; padding:20px; background:#e8f5e9; border-radius:8px; border-left:4px solid #4CAF50;">
-      <strong style="color:#2c3e50;">📋 Trade Summary:</strong>
-      <div id="trade-summary" style="margin-top:10px; line-height:1.8;"></div>
+    <div class="trade-section">
+      <h4>You Receive</h4>
+      <label>Money: $<input type="number" id="trade-receive-money" class="money-input" value="0" min="0"></label>
+      <div id="trade-receive-properties" class="property-grid"></div>
     </div>
-    
-    <div style="display:flex; gap:15px; justify-content:center;">
-      <button class="menu-button" style="background:#4CAF50; flex:1; max-width:200px;" onclick="proposeTrade()">📤 Propose Trade</button>
-      <button class="menu-button" style="background:#666; flex:1; max-width:200px;" onclick="closeTradeMenu()">❌ Cancel</button>
+    <div class="trade-buttons">
+      <button class="trade-btn-send" onclick="sendTrade()">📤 Send Offer</button>
+      <button class="trade-btn-cancel" onclick="closeTradeMenu()">❌ Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- Trade Proposal Modal -->
-<div id="trade-proposal-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:2001;">
-  <div style="background:white; max-width:500px; margin:80px auto; padding:35px; border-radius:12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
-    <h3 style="color:#2c3e50; margin-top:0;">🤝 Trade Proposal</h3>
-    <div id="proposal-details" style="margin:25px 0; text-align:left; line-height:1.8;"></div>
-    <div style="display:flex; gap:15px; justify-content:center; margin-top:30px;">
-      <button class="menu-button" style="background:#4CAF50; padding:15px 30px; font-size:16px;" onclick="acceptTrade()">✅ Accept</button>
-      <button class="menu-button" style="background:#f44336; padding:15px 30px; font-size:16px;" onclick="rejectTrade()">❌ Reject</button>
+<div id="trade-offer-modal" class="trade-offer-modal">
+  <div class="trade-offer-content">
+    <h2>🤝 Trade Offer Received</h2>
+    <p id="trade-offer-from"></p>
+    <div class="trade-offer-section">
+      <h4>They Give You:</h4>
+      <div id="trade-offer-they-give"></div>
+    </div>
+    <div class="trade-offer-section">
+      <h4>You Give Them:</h4>
+      <div id="trade-offer-you-give"></div>
+    </div>
+    <div class="trade-offer-buttons">
+      <button class="accept-btn" onclick="acceptTrade()">✅ Accept</button>
+      <button class="reject-btn" onclick="rejectTrade()">❌ Reject</button>
+    </div>
+  </div>
+</div>
+
+<div id="auction-modal">
+  <div id="auction-content">
+    <div class="auction-header">
+      <h2>🔨 AUCTION</h2>
+      <div class="auction-tile-name" id="auction-tile-name">Property Name</div>
+      <div class="auction-price" id="auction-market-price">Market Price: $XXX</div>
+      <div class="auction-current-bid" id="auction-current-bid">Current Bid: $X</div>
+    </div>
+    <div class="auction-body">
+      <div class="auction-timer"><div id="auction-timer-bar"></div></div>
+      <div id="auction-players-grid" class="auction-players-grid"></div>
+      <div class="auction-log">
+        <div class="auction-log-title">📜 Auction History</div>
+        <div id="auction-log"></div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-// === GAME CONSTANTS ===
-const START = 1500;
-const HOUSE = 200; // Base reference (actual cost = property price)
-const VILLA = 500; // Base reference (actual cost = house cost)
-const REF = 0.8; // 80% refund
-const LUCK = [6, 18];
-const JAIL = 12;
-const BAIL = 300;
-const PASS_MONEY = 100;
-
+// Game state
 let tiles = [];
+let players = [];
 let current = 0;
 let rolled = false;
-let players = [];
-let gameMode = null;
-let soundEnabled = true;
+let diceRoll = [0, 0];
 let sellingMode = false;
-let buildMode = null; // 'house' or 'villa'
-let numPlayers = 2;
-
-// Online multiplayer variables
+let buildMode = null;
+let gameMode = null;
+let numPlayers = 0;
+let logEntries = [];
 let peer = null;
 let conn = null;
 let isHost = false;
-let isMyTurn = true;
+let isMyTurn = false;
 let myPlayerIndex = 0;
-let roomCode = '';
+let roomCode = null;
+let currentTrade = null;
+let selectedPartner = null;
+let tradeGiveProperties = [];
+let tradeReceiveProperties = [];
+let auction = null;
 
-// Player colors and shapes for 2-4 players
-const PLAYER_CONFIGS = [
-  { color: "#2196F3", shape: "circle", name: "Player 1" },
-  { color: "#F44336", shape: "triangle", name: "Player 2" },
-  { color: "#9C27B0", shape: "square", name: "Player 3" },
-  { color: "#FF9800", shape: "diamond", name: "Player 4" }
+// Classic Monopoly board setup (40 tiles arranged 8x5)
+const MONOPOLY_CLASSIC = [
+  { name: 'GO', type: 'go' },
+  { name: 'Mediterranean Ave', type: 'property', price: 60, rent: [2, 10, 30, 90, 160, 250], buildCost: 50, row: 0 },
+  { name: 'Community Chest', type: 'luck' },
+  { name: 'Baltic Ave', type: 'property', price: 60, rent: [4, 20, 60, 180, 320, 450], buildCost: 50, row: 0 },
+  { name: 'Income Tax', type: 'tax', amount: 200 },
+  { name: 'Reading Railroad', type: 'railroad', price: 200 },
+  { name: 'Oriental Ave', type: 'property', price: 100, rent: [6, 30, 90, 270, 400, 550], buildCost: 50, row: 1 },
+  { name: 'Chance', type: 'luck' },
+  { name: 'Vermont Ave', type: 'property', price: 100, rent: [6, 30, 90, 270, 400, 550], buildCost: 50, row: 1 },
+  { name: 'Connecticut Ave', type: 'property', price: 120, rent: [8, 40, 100, 300, 450, 600], buildCost: 50, row: 1 },
+  { name: 'Jail/Visiting', type: 'jail' },
+  { name: 'St. Charles Place', type: 'property', price: 140, rent: [10, 50, 150, 450, 625, 750], buildCost: 100, row: 2 },
+  { name: 'Electric Company', type: 'utility', price: 150 },
+  { name: 'States Ave', type: 'property', price: 140, rent: [10, 50, 150, 450, 625, 750], buildCost: 100, row: 2 },
+  { name: 'Virginia Ave', type: 'property', price: 160, rent: [12, 60, 180, 500, 700, 900], buildCost: 100, row: 2 },
+  { name: 'Pennsylvania RR', type: 'railroad', price: 200 },
+  { name: 'St. James Place', type: 'property', price: 180, rent: [14, 70, 200, 550, 750, 950], buildCost: 100, row: 3 },
+  { name: 'Community Chest', type: 'luck' },
+  { name: 'Tennessee Ave', type: 'property', price: 180, rent: [14, 70, 200, 550, 750, 950], buildCost: 100, row: 3 },
+  { name: 'New York Ave', type: 'property', price: 200, rent: [16, 80, 220, 600, 800, 1000], buildCost: 100, row: 3 },
+  { name: 'Free Parking', type: 'freeparking' },
+  { name: 'Kentucky Ave', type: 'property', price: 220, rent: [18, 90, 250, 700, 875, 1050], buildCost: 150, row: 4 },
+  { name: 'Chance', type: 'luck' },
+  { name: 'Indiana Ave', type: 'property', price: 220, rent: [18, 90, 250, 700, 875, 1050], buildCost: 150, row: 4 },
+  { name: 'Illinois Ave', type: 'property', price: 240, rent: [20, 100, 300, 750, 925, 1100], buildCost: 150, row: 4 },
+  { name: 'B&O Railroad', type: 'railroad', price: 200 },
+  { name: 'Atlantic Ave', type: 'property', price: 260, rent: [22, 110, 330, 800, 975, 1150], buildCost: 150, row: 5 },
+  { name: 'Ventnor Ave', type: 'property', price: 260, rent: [22, 110, 330, 800, 975, 1150], buildCost: 150, row: 5 },
+  { name: 'Water Works', type: 'utility', price: 150 },
+  { name: 'Marvin Gardens', type: 'property', price: 280, rent: [24, 120, 360, 850, 1025, 1200], buildCost: 150, row: 5 },
+  { name: 'Go to Jail', type: 'gotojail' },
+  { name: 'Pacific Ave', type: 'property', price: 300, rent: [26, 130, 390, 900, 1100, 1275], buildCost: 200, row: 6 },
+  { name: 'North Carolina Ave', type: 'property', price: 300, rent: [26, 130, 390, 900, 1100, 1275], buildCost: 200, row: 6 },
+  { name: 'Community Chest', type: 'luck' },
+  { name: 'Pennsylvania Ave', type: 'property', price: 320, rent: [28, 150, 450, 1000, 1200, 1400], buildCost: 200, row: 6 },
+  { name: 'Short Line RR', type: 'railroad', price: 200 },
+  { name: 'Chance', type: 'luck' },
+  { name: 'Park Place', type: 'property', price: 350, rent: [35, 175, 500, 1100, 1300, 1500], buildCost: 200, row: 7 },
+  { name: 'Luxury Tax', type: 'tax', amount: 100 },
+  { name: 'Boardwalk', type: 'property', price: 400, rent: [50, 200, 600, 1400, 1700, 2000], buildCost: 200, row: 7 }
 ];
 
-// Rent values
-const rv = [10, 25, 75, 225, 500];
+function resetGame(numP = 2) {
+  tiles = MONOPOLY_CLASSIC.map((template, i) => ({ ...template, o: -1, h: 0, v: 0 }));
+  const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
+  const names = ['Red', 'Blue', 'Green', 'Orange'];
+  players = [];
+  for (let i = 0; i < numP; i++) {
+    players.push({ pos: 0, money: 1500, jailTurns: 0, color: colors[i], name: names[i], isAI: false });
+  }
+  if (gameMode === 'ai') {
+    for (let i = 1; i < numP; i++) {
+      players[i].isAI = true;
+      players[i].name += ' 🤖';
+    }
+  }
+  current = 0;
+  rolled = false;
+  diceRoll = [0, 0];
+  sellingMode = false;
+  buildMode = null;
+  logEntries = [];
+  draw();
+  updatePanels();
+  updateButtons();
+  log('🎮 Game started! Roll the dice.', 'log-action');
+  if (gameMode === 'online') {
+    isMyTurn = isHost ? (current === 0) : (current === 1);
+  }
+}
 
-// === UI FUNCTIONS ===
-function showPlayerCountScreen() {
+function selectGameMode(mode) {
+  gameMode = mode;
   document.getElementById('menu-screen').style.display = 'none';
-  document.getElementById('player-count-screen').style.display = 'block';
+  if (mode === 'online') {
+    document.getElementById('online-lobby').style.display = 'block';
+  } else {
+    document.getElementById('player-count-screen').style.display = 'block';
+  }
 }
 
 function backToMenu() {
+  gameMode = null;
   document.getElementById('menu-screen').style.display = 'block';
   document.getElementById('player-count-screen').style.display = 'none';
   document.getElementById('online-lobby').style.display = 'none';
   document.getElementById('game-screen').style.display = 'none';
-  
-  if (peer) {
-    peer.destroy();
-    peer = null;
-  }
-  if (conn) {
-    conn.close();
-    conn = null;
-  }
-  
-  gameMode = null;
-  resetGame();
+  if (conn) conn.close();
+  if (peer) peer.destroy();
+  conn = null;
+  peer = null;
 }
 
-function showOnlineLobby() {
-  document.getElementById('menu-screen').style.display = 'none';
-  document.getElementById('online-lobby').style.display = 'block';
+function startGame(numP) {
+  numPlayers = numP;
+  document.getElementById('player-count-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+  resetGame(numP);
 }
 
-// === ONLINE MULTIPLAYER ===
-function hostGame() {
+function generateRoomCode() {
+  return Math.random().toString(36).substr(2, 4).toUpperCase();
+}
+
+function createRoom() {
   roomCode = generateRoomCode();
-  peer = new Peer(roomCode);
-  
-  peer.on('open', function(id) {
+  peer = new Peer(roomCode, {
+    config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+  });
+  peer.on('open', (id) => {
+    isHost = true;
     document.getElementById('room-code').textContent = roomCode;
     document.getElementById('room-code-section').style.display = 'block';
-    isHost = true;
-    myPlayerIndex = 0;
+    showConnectionStatus('Waiting for player to join...', 'waiting');
   });
-  
-  peer.on('connection', function(connection) {
+  peer.on('connection', (connection) => {
     conn = connection;
     setupConnection();
-    document.getElementById('host-status').textContent = 'Opponent connected! Starting game...';
-    document.getElementById('host-status').className = 'connection-status status-connected';
-    
+    showConnectionStatus('Player connected! Starting game...', 'connected');
     setTimeout(() => {
-      startGame('online');
+      document.getElementById('online-lobby').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'block';
+      myPlayerIndex = 0;
+      startGame(2);
+      sendAction('sync', { tiles: tiles, players: players, current: current });
     }, 1000);
   });
-  
-  peer.on('error', function(err) {
-    console.error('Peer error:', err);
-    alert('Connection error. Please try again.');
+  peer.on('error', (err) => {
+    showConnectionStatus('Connection error: ' + err.message, 'error');
   });
 }
 
-function joinGame() {
-  let code = document.getElementById('join-code-input').value.toUpperCase().trim();
-  
-  if (code.length !== 6) {
-    alert('Please enter a valid 6-character room code');
+function joinRoom() {
+  const code = document.getElementById('join-code-input').value.toUpperCase().trim();
+  if (code.length !== 4) {
+    showConnectionStatus('Please enter a 4-character room code', 'error');
     return;
   }
-  
-  peer = new Peer();
-  
-  peer.on('open', function() {
+  peer = new Peer({ config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] } });
+  peer.on('open', () => {
     conn = peer.connect(code);
-    setupConnection();
     isHost = false;
     myPlayerIndex = 1;
-    
-    document.getElementById('join-status').style.display = 'block';
-    document.getElementById('join-status').textContent = 'Connecting...';
-    document.getElementById('join-status').className = 'connection-status status-waiting';
+    setupConnection();
+    showConnectionStatus('Connecting to host...', 'waiting');
   });
-  
-  peer.on('error', function(err) {
-    console.error('Peer error:', err);
-    document.getElementById('join-status').style.display = 'block';
-    document.getElementById('join-status').textContent = 'Failed to connect. Check the room code.';
-    document.getElementById('join-status').className = 'connection-status status-error';
+  peer.on('error', (err) => {
+    showConnectionStatus('Failed to join room: ' + err.message, 'error');
   });
 }
 
 function setupConnection() {
-  conn.on('open', function() {
+  conn.on('open', () => {
     if (!isHost) {
-      document.getElementById('join-status').textContent = 'Connected! Starting game...';
-      document.getElementById('join-status').className = 'connection-status status-connected';
-      
-      setTimeout(() => {
-        startGame('online');
-      }, 1000);
+      showConnectionStatus('Connected! Waiting for game to start...', 'connected');
     }
   });
-  
-  conn.on('data', function(data) {
+  conn.on('data', (data) => {
     handleRemoteAction(data);
   });
-  
-  conn.on('close', function() {
-    alert('Connection lost. Returning to menu.');
+  conn.on('close', () => {
+    showConnectionStatus('Connection lost', 'error');
+    alert('Connection to other player lost. Returning to menu.');
     backToMenu();
   });
 }
 
-function sendAction(action, extra = {}) {
-  if (conn && conn.open) {
-    conn.send({ action, ...extra });
+function showConnectionStatus(message, type) {
+  const statusDiv = document.getElementById('connection-status');
+  statusDiv.textContent = message;
+  statusDiv.style.display = 'block';
+  statusDiv.className = 'connection-status status-' + type;
+}
+
+function sendAction(action, data = {}) {
+  if (!conn || gameMode !== 'online') return;
+  conn.send({ action: action, data: data });
+}
+
+function handleRemoteAction(message) {
+  const { action, data } = message;
+  switch (action) {
+    case 'sync':
+      tiles = data.tiles;
+      players = data.players;
+      current = data.current;
+      document.getElementById('online-lobby').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'block';
+      draw();
+      updatePanels();
+      updateButtons();
+      break;
+    case 'roll':
+      diceRoll = data.dice;
+      rolled = true;
+      movePlayer(data.newPos);
+      landOnTile();
+      draw();
+      updatePanels();
+      updateButtons();
+      break;
+    case 'buy':
+      buyProperty();
+      break;
+    case 'end':
+      switchTurn();
+      break;
+    case 'sell':
+      tiles[data.tileIndex].o = -1;
+      players[data.playerIndex].money += data.amount;
+      draw();
+      updatePanels();
+      break;
+    case 'build':
+      if (data.buildType === 'house') {
+        tiles[data.tileIndex].h++;
+      } else {
+        tiles[data.tileIndex].v++;
+      }
+      players[data.playerIndex].money -= data.cost;
+      draw();
+      updatePanels();
+      break;
   }
 }
 
-function sendGameState() {
-  if (conn && conn.open && isHost) {
-    conn.send({
-      action: 'sync',
-      tiles: tiles,
-      players: players,
-      current: current,
-      rolled: rolled
-    });
+function draw() {
+  let board = document.getElementById('board');
+  board.style.gridTemplateColumns = 'repeat(5, 100px)';
+  board.style.gridTemplateRows = 'repeat(8, 100px)';
+  board.style.width = '540px';
+  board.style.height = '860px';
+  board.innerHTML = '';
+  for (let i = 0; i < tiles.length; i++) {
+    let t = tiles[i];
+    let div = document.createElement('div');
+    div.className = 'tile';
+    div.dataset.index = i;
+    if (t.type === 'go') div.classList.add('go-tile');
+    else if (t.type === 'jail') div.classList.add('jail-tile');
+    else if (t.type === 'gotojail') div.classList.add('gotojail-tile');
+    else if (t.type === 'freeparking') div.classList.add('freeparking-tile');
+    else if (t.type === 'luck') div.classList.add('luck-tile');
+    else if (t.type === 'tax') div.classList.add('tax-tile');
+    else if (t.type === 'railroad') div.classList.add('rail-tile');
+    else if (t.type === 'utility') div.classList.add('utility-tile');
+    if (t.type === 'property' && t.row !== undefined) {
+      let hdr = document.createElement('div');
+      hdr.className = 'tile-header row-' + t.row;
+      hdr.textContent = t.name;
+      div.appendChild(hdr);
+    } else {
+      let hdr = document.createElement('div');
+      hdr.className = 'tile-header';
+      hdr.textContent = t.name;
+      div.appendChild(hdr);
+    }
+    if (t.type === 'property' || t.type === 'railroad' || t.type === 'utility') {
+      let priceDiv = document.createElement('div');
+      priceDiv.style.fontSize = '9px';
+      priceDiv.textContent = '$' + t.price;
+      div.appendChild(priceDiv);
+    }
+    if (t.o >= 0) {
+      let ownerDiv = document.createElement('div');
+      ownerDiv.style.fontSize = '8px';
+      ownerDiv.style.color = players[t.o].color;
+      ownerDiv.style.fontWeight = 'bold';
+      ownerDiv.textContent = '👤 ' + players[t.o].name;
+      div.appendChild(ownerDiv);
+    }
+    if (t.h > 0 || t.v > 0) {
+      let buildDiv = document.createElement('div');
+      buildDiv.style.marginTop = '3px';
+      for (let j = 0; j < t.h; j++) {
+        let house = document.createElement('div');
+        house.className = 'house';
+        house.title = 'House';
+        buildDiv.appendChild(house);
+      }
+      for (let j = 0; j < t.v; j++) {
+        let villa = document.createElement('div');
+        villa.className = 'villa';
+        villa.title = 'Hotel';
+        buildDiv.appendChild(villa);
+      }
+      div.appendChild(buildDiv);
+    }
+    let pawnsHere = players.filter((p, idx) => p.pos === i);
+    if (pawnsHere.length > 0) {
+      let pawnDiv = document.createElement('div');
+      pawnDiv.style.marginTop = '5px';
+      pawnsHere.forEach(p => {
+        let pawn = document.createElement('div');
+        pawn.className = 'pawn';
+        pawn.style.background = p.color;
+        pawn.title = p.name;
+        pawnDiv.appendChild(pawn);
+      });
+      div.appendChild(pawnDiv);
+    }
+    if (sellingMode && t.o === current) {
+      div.classList.add('sellable');
+      div.onclick = () => sellProperty(i);
+    }
+    if (buildMode && canBuildOn(i)) {
+      div.classList.add('buildable');
+      div.onclick = () => buildOnProperty(i);
+    }
+    board.appendChild(div);
   }
 }
 
-function handleRemoteAction(data) {
-  if (data.action === 'sync') {
-    tiles = data.tiles;
-    players = data.players;
-    current = data.current;
-    rolled = data.rolled;
-    
-    isMyTurn = (isHost && current === 0) || (!isHost && current === 1);
-    
+function roll() {
+  if (rolled) {
+    log('⚠️ Already rolled this turn!', 'log-action');
+    return;
+  }
+  if (gameMode === 'online' && !isMyTurn) {
+    log('⚠️ Wait for your turn!', 'log-action');
+    return;
+  }
+  let p = players[current];
+  if (p.jailTurns > 0) {
+    diceRoll = [Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)];
+    rolled = true;
+    if (diceRoll[0] === diceRoll[1]) {
+      p.jailTurns = 0;
+      log(`🎲 ${p.name} rolled doubles [${diceRoll[0]}, ${diceRoll[1]}] and escaped jail!`, 'log-action');
+      movePlayer(p.pos + diceRoll[0] + diceRoll[1]);
+      landOnTile();
+    } else {
+      p.jailTurns--;
+      log(`🎲 ${p.name} rolled [${diceRoll[0]}, ${diceRoll[1]}] — ${p.jailTurns} turns left in jail`, 'log-action');
+    }
     draw();
-    status();
+    updatePanels();
     updateButtons();
     return;
   }
-  
-  switch(data.action) {
-    case 'roll':
-      handleRemoteRoll(data.d1, data.d2);
-      break;
-    case 'buy':
-      handleRemoteBuy();
-      break;
-    case 'house':
-      handleRemoteHouse(data.tileIndex);
-      break;
-    case 'villa':
-      handleRemoteVilla(data.tileIndex);
-      break;
-    case 'sell':
-      handleRemoteSell(data.tileIndex);
-      break;
-    case 'bail':
-      handleRemoteBail();
-      break;
-    case 'end':
-      handleRemoteEnd();
-      break;
-  }
-}
-
-function handleRemoteRoll(d1, d2) {
-  let otherPlayer = isHost ? 1 : 0;
-  
-  if (players[otherPlayer].jailTurns > 0) {
-    if (d1 === d2) {
-      players[otherPlayer].jailTurns = 0;
-      log(`🎉 ${players[otherPlayer].name} rolled DOUBLES and escaped jail!`, "log-income");
-    } else {
-      log(`🎲 ${players[otherPlayer].name} rolled ${d1} + ${d2} = ${d1+d2} (still in jail)`, "log-action");
-      rolled = true;
-      draw();
-      status();
-      updateButtons();
-      return;
-    }
-  }
-  
-  players[otherPlayer].pos = (players[otherPlayer].pos + d1 + d2) % 25;
-  
-  if (players[otherPlayer].pos < d1 + d2 && !LUCK.includes(players[otherPlayer].pos)) {
-    players[otherPlayer].money += PASS_MONEY;
-    log(`💰 ${players[otherPlayer].name} passed START! +$${PASS_MONEY}`, "log-income");
-  }
-  
-  log(`🎲 ${players[otherPlayer].name} rolled ${d1} + ${d2} = ${d1+d2}`, "log-action");
+  diceRoll = [Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)];
   rolled = true;
-  
-  handleLanding(otherPlayer);
-  
-  draw();
-  status();
-  updateButtons();
-}
-
-function handleRemoteBuy() {
-  let otherPlayer = isHost ? 1 : 0;
-  let i = players[otherPlayer].pos;
-  tiles[i].o = otherPlayer;
-  players[otherPlayer].money -= price(i);
-  log(`🏠 ${players[otherPlayer].name} bought Tile ${i} for $${price(i)}`, "log-action");
-  
-  draw();
-  updateButtons();
-}
-
-function handleRemoteHouse(tileIndex) {
-  let otherPlayer = isHost ? 1 : 0;
-  let cost = houseCost(tileIndex);
-  players[otherPlayer].money -= cost;
-  tiles[tileIndex].h++;
-  log(`🔨 ${players[otherPlayer].name} built a house on Tile ${tileIndex} for $${cost}`, "log-action");
-  
-  draw();
-  updateButtons();
-}
-
-function handleRemoteVilla(tileIndex) {
-  let otherPlayer = isHost ? 1 : 0;
-  let cost = villaCost(tileIndex);
-  players[otherPlayer].money -= cost;
-  tiles[tileIndex].h = 0;
-  tiles[tileIndex].v = true;
-  log(`🏰 ${players[otherPlayer].name} built a VILLA on Tile ${tileIndex} for $${cost}!`, "log-action");
-  
-  draw();
-  updateButtons();
-}
-
-function handleRemoteSell(tileIndex) {
-  let otherPlayer = isHost ? 1 : 0;
-  let t = tiles[tileIndex];
-  
-  if (t.v) {
-    let refund = villaCost(tileIndex) * REF;
-    players[otherPlayer].money += refund;
-    t.v = false;
-    t.h = 3;
-    log(`💰 ${players[otherPlayer].name} sold villa on Tile ${tileIndex} for $${refund}`, "log-income");
-  } else if (t.h) {
-    let refund = houseCost(tileIndex) * REF;
-    players[otherPlayer].money += refund;
-    t.h--;
-    log(`💰 ${players[otherPlayer].name} sold house on Tile ${tileIndex} for $${refund}`, "log-income");
-  } else {
-    players[otherPlayer].money += price(tileIndex) * REF;
-    t.o = null;
-    log(`💰 ${players[otherPlayer].name} sold property Tile ${tileIndex} for $${price(tileIndex) * REF}`, "log-income");
+  let total = diceRoll[0] + diceRoll[1];
+  log(`🎲 ${p.name} rolled [${diceRoll[0]}, ${diceRoll[1]}] = ${total}`, 'log-action');
+  beep(400);
+  let newPos = (p.pos + total) % tiles.length;
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('roll', { dice: diceRoll, newPos: newPos });
   }
-  
+  movePlayer(newPos);
+  landOnTile();
   draw();
+  updatePanels();
   updateButtons();
-}
-
-function handleRemoteBail() {
-  let otherPlayer = isHost ? 1 : 0;
-  players[otherPlayer].money -= BAIL;
-  players[otherPlayer].jailTurns = 0;
-  log(`🔓 ${players[otherPlayer].name} paid $${BAIL} bail and is FREE!`, "log-income");
-  
-  draw();
-  status();
-  updateButtons();
-}
-
-function handleRemoteEnd() {
-  rolled = false;
-  switchTurn();
-}
-
-function generateRoomCode() {
-  let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
-
-// === GAME INITIALIZATION ===
-function startGame(mode, playerCount = 2) {
-  gameMode = mode;
-  numPlayers = mode === 'online' || mode === 'ai' ? 2 : playerCount;
-  
-  // Hide all screens
-  document.getElementById('menu-screen').style.display = 'none';
-  document.getElementById('player-count-screen').style.display = 'none';
-  document.getElementById('online-lobby').style.display = 'none';
-  document.getElementById('game-screen').style.display = 'block';
-  
-  resetGame();
-  initBoard();
-  
-  if (gameMode === 'online') {
-    isMyTurn = (isHost && current === 0) || (!isHost && current === 1);
-  }
-  
-  draw();
-  status();
-  updateButtons();
-  log(`🎮 Game started! ${numPlayers} players`, "log-action");
-}
-
-function initBoard() {
-  tiles = [];
-  for (let i = 0; i < 25; i++) {
-    tiles.push({
-      o: null,
-      h: 0,
-      v: false
-    });
+  if (p.isAI) {
+    setTimeout(() => aiTakeTurn(), 1500);
   }
 }
 
-// === UTILITY FUNCTIONS ===
-function log(msg, className = "") {
-  let l = document.getElementById("log");
-  let entry = document.createElement("div");
-  entry.className = className;
-  entry.textContent = msg;
-  l.appendChild(entry);
-  l.scrollTop = l.scrollHeight;
-}
-
-function beep(freq, duration = 0.1) {
-  if (!soundEnabled) return;
-  let ctx = new (window.AudioContext || window.webkitAudioContext)();
-  let osc = ctx.createOscillator();
-  let gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.frequency.value = freq;
-  gain.gain.value = 0.1;
-  osc.start();
-  setTimeout(() => osc.stop(), duration * 1000);
-}
-
-function status() {
+function movePlayer(newPos) {
   let p = players[current];
-  let jailInfo = p.jailTurns > 0 ? ` 🚔 (${p.jailTurns} turns in jail)` : '';
-  let turnInfo = gameMode === 'online' ? (isMyTurn ? ' - YOUR TURN' : ' - Waiting...') : '';
-  document.getElementById("status").textContent = 
-    `${p.name}'s Turn${jailInfo}${turnInfo} | Money: $${p.money} | Total: $${wealth(current)}`;
-}
-
-function wealth(pIdx) {
-  let w = players[pIdx].money;
-  for (let i = 0; i < 25; i++) {
-    if (tiles[i].o === pIdx) {
-      w += price(i);
-      w += tiles[i].h * HOUSE;
-      if (tiles[i].v) w += VILLA;
-    }
-  }
-  return w;
-}
-
-function price(i) {
-  if (LUCK.includes(i)) return 0;
-  let row = Math.floor(i / 5);
-  return [100, 150, 200, 300, 400][row];
-}
-
-function houseCost(i) {
-  return Math.floor(price(i) / 2); // House cost = half of property price
-}
-
-function villaCost(i) {
-  return Math.floor(price(i) / 2); // Villa upgrade cost = half of property price
-}
-
-// === CLUSTER DETECTION ===
-function getCluster(tileIndex) {
-  let visited = new Set();
-  let cluster = [];
-  let owner = tiles[tileIndex].o;
-  
-  if (owner === null || LUCK.includes(tileIndex)) return [];
-  
-  function dfs(idx) {
-    if (visited.has(idx)) return;
-    if (LUCK.includes(idx)) return;
-    if (tiles[idx].o !== owner) return;
-    
-    visited.add(idx);
-    cluster.push(idx);
-    
-    // Get neighbors
-    let neighbors = getNeighbors(idx);
-    neighbors.forEach(n => dfs(n));
-  }
-  
-  dfs(tileIndex);
-  return cluster;
-}
-
-function getNeighbors(idx) {
-  let row = Math.floor(idx / 5);
-  let col = idx % 5;
-  let neighbors = [];
-  
-  // Right
-  if (col < 4 && !LUCK.includes(idx) && !LUCK.includes(idx + 1)) {
-    neighbors.push(idx + 1);
-  }
-  
-  // Left
-  if (col > 0 && !LUCK.includes(idx) && !LUCK.includes(idx - 1)) {
-    neighbors.push(idx - 1);
-  }
-  
-  // Down
-  if (row < 4 && !LUCK.includes(idx) && !LUCK.includes(idx + 5)) {
-    neighbors.push(idx + 5);
-  }
-  
-  // Up
-  if (row > 0 && !LUCK.includes(idx) && !LUCK.includes(idx - 5)) {
-    neighbors.push(idx - 5);
-  }
-  
-  return neighbors;
-}
-
-// Check if tile can be built on (even building rule)
-function canBuildHouse(tileIndex) {
-  let cluster = getCluster(tileIndex);
-  if (cluster.length < 3) return false;
-  
-  let tile = tiles[tileIndex];
-  if (tile.v) return false;
-  if (tile.h >= 3) return false;
-  
-  // Even building rule: can't have more than 1 house difference
-  let minHouses = Math.min(...cluster.map(i => tiles[i].v ? 4 : tiles[i].h));
-  let maxHouses = Math.max(...cluster.map(i => tiles[i].v ? 4 : tiles[i].h));
-  
-  // If building here would create >1 difference, block it
-  let newHouses = tile.h + 1;
-  if (newHouses > minHouses + 1) return false;
-  
-  return true;
-}
-
-function canBuildVilla(tileIndex) {
-  let cluster = getCluster(tileIndex);
-  if (cluster.length < 3) return false;
-  
-  let tile = tiles[tileIndex];
-  if (tile.v) return false;
-  if (tile.h !== 3) return false;
-  
-  // Even building rule for villa (treat villa as 4 houses)
-  let minHouses = Math.min(...cluster.map(i => tiles[i].v ? 4 : tiles[i].h));
-  
-  // Building villa (=4 houses) when min is <3 would violate even rule
-  if (minHouses < 3) return false;
-  
-  return true;
-}
-
-// Check if cluster has 3+ owned tiles
-function adjacent(i) {
-  let cluster = getCluster(i);
-  return cluster.length >= 3;
-}
-
-// === DRAWING ===
-function draw() {
-  let board = document.getElementById("board");
-  board.innerHTML = "";
-  
-  for (let i = 0; i < 25; i++) {
-    let tile = document.createElement("div");
-    tile.className = "tile";
-    tile.id = `tile${i}`;
-    
-    let row = Math.floor(i / 5);
-    let rowClass = `row-${row}`;
-    
-    let isLuck = LUCK.includes(i);
-    let isJail = i === JAIL;
-    
-    if (isLuck) {
-      tile.classList.add("luck-tile");
-    } else if (isJail) {
-      tile.classList.add("jail-tile");
-    }
-    
-    let header = document.createElement("div");
-    header.className = `tile-header ${rowClass}`;
-    
-    if (isLuck) {
-      header.textContent = "🍀 LUCK";
-    } else if (isJail) {
-      header.textContent = "🚔 JAIL";
-    } else {
-      header.textContent = `#${i}`;
-    }
-    
-    tile.appendChild(header);
-    
-    if (!isLuck && !isJail) {
-      let info = document.createElement("div");
-      info.className = "tile-info";
-      
-      let p = price(i);
-      let row = Math.floor(i / 5);
-      
-      // Calculate base rent based on property price
-      // Row 0: 1/30 of $100 = ~3.3 → use 3
-      // Row 4: 1/10 of $400 = 40
-      let baseRent;
-      if (row === 0) baseRent = Math.floor(100 / 30); // ~3
-      else if (row === 1) baseRent = Math.floor(150 / 25); // 6
-      else if (row === 2) baseRent = Math.floor(200 / 20); // 10
-      else if (row === 3) baseRent = Math.floor(300 / 15); // 20
-      else if (row === 4) baseRent = Math.floor(400 / 10); // 40
-      
-      info.innerHTML = `<div style="font-weight: bold;">$${p}</div>`;
-      
-      let t = tiles[i];
-      
-      if (t.o !== null) {
-        let ownerColor = players[t.o].color;
-        // Change tile background to owner's color with transparency
-        tile.style.background = `linear-gradient(135deg, ${ownerColor}33 0%, ${ownerColor}66 100%)`;
-        
-        info.innerHTML += `<div style="color: ${ownerColor}; font-weight: bold; font-size: 10px;">${players[t.o].name}</div>`;
-        
-        if (t.v) {
-          info.innerHTML += `<div style="font-size: 10px;">🏰 Villa</div>`;
-        } else if (t.h > 0) {
-          info.innerHTML += `<div style="font-size: 10px;">🏠 ${t.h}H</div>`;
-        }
-      } else {
-        // Show rent info for unowned properties
-        // Multipliers: 5x, 15x, 37x, 45x
-        info.innerHTML += `<div style="font-size: 8px; line-height: 1.3; margin-top: 2px;">
-          R: $${baseRent}<br>
-          1H: $${baseRent * 5} | 2H: $${baseRent * 15}<br>
-          3H: $${baseRent * 37} | V: $${baseRent * 45}
-        </div>`;
-      }
-      
-      tile.appendChild(info);
-      
-      // Connection lines for adjacent tiles
-      let neighbors = getNeighbors(i);
-      let col = i % 5;
-      
-      if (t.o !== null && !isLuck) {
-        neighbors.forEach(n => {
-          if (tiles[n].o === t.o) {
-            let nCol = n % 5;
-            if (nCol > col) {
-              let line = document.createElement("div");
-              line.className = "connection-line connection-right";
-              line.style.color = players[t.o].color;
-              tile.appendChild(line);
-            }
-            if (n > i && nCol === col) {
-              let line = document.createElement("div");
-              line.className = "connection-line connection-down";
-              line.style.color = players[t.o].color;
-              tile.appendChild(line);
-            }
-          }
-        });
-      }
-    }
-    
-    // Token container
-    let tokenContainer = document.createElement("div");
-    tokenContainer.className = "token-container";
-    
-    players.forEach((p, pIdx) => {
-      if (p.pos === i) {
-        let token = document.createElement("div");
-        token.className = `token ${p.shape}`;
-        token.style.backgroundColor = p.color;
-        token.style.borderColor = p.color;
-        tokenContainer.appendChild(token);
-      }
-    });
-    
-    tile.appendChild(tokenContainer);
-    
-    // Click handlers for sell and build modes
-    if (sellingMode) {
-      let t = tiles[i];
-      if (t.o === current && !LUCK.includes(i)) {
-        tile.classList.add("sellable");
-        tile.onclick = () => sellTile(i);
-      }
-    } else if (buildMode) {
-      let t = tiles[i];
-      if (t.o === current && !LUCK.includes(i)) {
-        if (buildMode === 'house' && canBuildHouse(i)) {
-          tile.classList.add("buildable");
-          tile.onclick = () => buildOnTile(i, 'house');
-        } else if (buildMode === 'villa' && canBuildVilla(i)) {
-          tile.classList.add("buildable");
-          tile.onclick = () => buildOnTile(i, 'villa');
-        }
-      }
-    }
-    
-    board.appendChild(tile);
-  }
-}
-
-function updateButtons() {
-  let inJail = players[current].jailTurns > 0;
-  let canRoll = !rolled || inJail;
-  let canEndTurn = rolled || inJail;
-  
-  // Update Roll button color to current player's color
-  let rollBtn = document.getElementById('rollBtn');
-  rollBtn.style.background = players[current].color;
-  rollBtn.style.boxShadow = `0 2px 8px ${players[current].color}88`;
-  
-  // Trade button - BUG FIX B
-  let canTrade = rolled && gameMode === 'local' && players.filter(p => !p.isAI).length > 1;
-  document.getElementById('tradeBtn').disabled = !canTrade;
-  
-  // Online mode restrictions
-  if (gameMode === 'online' && !isMyTurn) {
-    document.getElementById('rollBtn').disabled = true;
-    document.getElementById('endBtn').disabled = true;
-    document.getElementById('buyBtn').disabled = true;
-    document.getElementById('houseBtn').disabled = true;
-    document.getElementById('villaBtn').disabled = true;
-    document.getElementById('sellBtn').disabled = true;
-    document.getElementById('bailBtn').disabled = true;
-    return;
-  }
-  
-  document.getElementById('rollBtn').disabled = !canRoll;
-  document.getElementById('endBtn').disabled = !canEndTurn;
-  
-  let i = players[current].pos;
-  let t = tiles[i];
-  
-  // Buy button
-  let canBuy = rolled && !LUCK.includes(i) && t.o === null && players[current].money >= price(i);
-  document.getElementById('buyBtn').disabled = !canBuy;
-  
-  // Bail button
-  let canBail = inJail && players[current].money >= BAIL;
-  document.getElementById('bailBtn').disabled = !canBail;
-  document.getElementById('bailBtn').style.display = inJail ? 'inline-block' : 'none';
-  
-  // House/Villa/Sell buttons - can always use if you have eligible properties
-  let hasOwnedProps = tiles.some((tile, idx) => tile.o === current && !LUCK.includes(idx));
-  let canBuildHouseAnywhere = tiles.some((tile, idx) => {
-    if (tile.o === current && canBuildHouse(idx)) {
-      return players[current].money >= houseCost(idx);
-    }
-    return false;
-  });
-  let canBuildVillaAnywhere = tiles.some((tile, idx) => {
-    if (tile.o === current && canBuildVilla(idx)) {
-      return players[current].money >= villaCost(idx);
-    }
-    return false;
-  });
-  
-  document.getElementById('houseBtn').disabled = !canBuildHouseAnywhere;
-  document.getElementById('villaBtn').disabled = !canBuildVillaAnywhere;
-  document.getElementById('sellBtn').disabled = !hasOwnedProps;
-}
-
-// === BUILD MODE ===
-function enterBuildMode(type) {
-  if (gameMode === 'online' && !isMyTurn) return;
-  
-  if (buildMode === type) {
-    exitBuildMode();
-    return;
-  }
-  
-  if (sellingMode) {
-    toggleSellMode();
-  }
-  
-  buildMode = type;
-  
-  let indicator = document.getElementById('build-mode-indicator');
-  indicator.style.display = 'block';
-  indicator.textContent = type === 'house' 
-    ? '🏠 BUILD HOUSE MODE: Click on any property in a cluster of 3+ to build' 
-    : '🏰 BUILD VILLA MODE: Click on any property with 3 houses in a cluster of 3+ to build';
-  
-  draw();
-  
-  // Update button appearance
-  if (type === 'house') {
-    document.getElementById('houseBtn').classList.add('active');
-    document.getElementById('villaBtn').classList.remove('active');
-  } else {
-    document.getElementById('villaBtn').classList.add('active');
-    document.getElementById('houseBtn').classList.remove('active');
-  }
-}
-
-function exitBuildMode() {
-  buildMode = null;
-  document.getElementById('build-mode-indicator').style.display = 'none';
-  document.getElementById('houseBtn').classList.remove('active');
-  document.getElementById('villaBtn').classList.remove('active');
-  draw();
-}
-
-function buildOnTile(tileIndex, type) {
-  if (gameMode === 'online' && !isMyTurn) return;
-  
-  let t = tiles[tileIndex];
-  
-  if (type === 'house') {
-    if (!canBuildHouse(tileIndex)) return;
-    
-    let cost = houseCost(tileIndex);
-    if (players[current].money < cost) return;
-    
-    players[current].money -= cost;
-    t.h++;
-    log(`🔨 ${players[current].name} built a house on Tile ${tileIndex} for $${cost}`, "log-action");
-    beep(500);
-    
-    if (gameMode === 'online' && isMyTurn) {
-      sendAction('house', { tileIndex });
-    }
-  } else if (type === 'villa') {
-    if (!canBuildVilla(tileIndex)) return;
-    
-    let cost = villaCost(tileIndex);
-    if (players[current].money < cost) return;
-    
-    players[current].money -= cost;
-    t.h = 0;
-    t.v = true;
-    log(`🏰 ${players[current].name} built a VILLA on Tile ${tileIndex} for $${cost}!`, "log-action");
-    beep(300, 0.3);
-    
-    if (gameMode === 'online' && isMyTurn) {
-      sendAction('villa', { tileIndex });
-    }
-  }
-  
-  draw();
-  updateButtons();
-  
-  // Stay in build mode after building
-}
-
-// === SELL MODE ===
-function toggleSellMode() {
-  if (gameMode === 'online' && !isMyTurn) return;
-  
-  sellingMode = !sellingMode;
-  
-  if (buildMode) {
-    exitBuildMode();
-  }
-  
-  let btn = document.getElementById("sellBtn");
-  if (sellingMode) {
-    btn.classList.add("active");
-    btn.textContent = "🏚️ Exit Sell Mode";
-  } else {
-    btn.classList.remove("active");
-    btn.textContent = "🏚️ Sell Mode (S)";
-  }
-  
-  draw();
-  beep(400, 0.1);
-}
-
-function sellTile(tileIndex) {
-  if (gameMode === 'online' && !isMyTurn) return;
-  
-  let t = tiles[tileIndex];
-  
-  if (t.v) {
-    let refund = villaCost(tileIndex) * REF;
-    players[current].money += refund;
-    t.v = false;
-    t.h = 3;
-    log(`💰 ${players[current].name} sold villa on Tile ${tileIndex} for $${refund}`, "log-income");
-  } else if (t.h) {
-    let refund = houseCost(tileIndex) * REF;
-    players[current].money += refund;
-    t.h--;
-    log(`💰 ${players[current].name} sold house on Tile ${tileIndex} for $${refund}`, "log-income");
-  } else {
-    players[current].money += price(tileIndex) * REF;
-    t.o = null;
-    log(`💰 ${players[current].name} sold property Tile ${tileIndex} for $${price(tileIndex) * REF}`, "log-income");
-  }
-  
-  beep(250);
-  
-  if (gameMode === 'online' && isMyTurn) {
-    sendAction('sell', { tileIndex });
-  }
-  
-  draw();
-  updateButtons();
-}
-
-// === GAME ACTIONS ===
-window.roll = async function() {
-  if (gameMode === 'online' && !isMyTurn) return;
-  
-  let inJail = players[current].jailTurns > 0;
-  
-  if (!inJail && rolled) return;
-  
-  let d1 = Math.floor(Math.random() * 6) + 1;
-  let d2 = Math.floor(Math.random() * 6) + 1;
-  
-  if (gameMode === 'online' && isMyTurn) {
-    sendAction('roll', { d1, d2 });
-  }
-  
-  if (inJail) {
-    if (d1 === d2) {
-      players[current].jailTurns = 0;
-      log(`🎉 ${players[current].name} rolled DOUBLES (${d1} + ${d2}) and escaped jail!`, "log-income");
-      beep(800);
-    } else {
-      log(`🎲 ${players[current].name} rolled ${d1} + ${d2} = ${d1+d2} (still in jail)`, "log-action");
-      beep(300);
-      rolled = true;
-      draw();
-      status();
-      updateButtons();
-      return;
-    }
-  }
-  
-  let oldPos = players[current].pos;
-  players[current].pos = (players[current].pos + d1 + d2) % 25;
-  
-  // Check if passed START
-  if (players[current].pos < oldPos ) {
-    players[current].money += PASS_MONEY;
-    log(`💰 ${players[current].name} passed START! +$${PASS_MONEY}`, "log-income");
+  if (newPos < p.pos) {
+    p.money += 200;
+    log(`💰 ${p.name} passed GO — Collect $200!`, 'log-income');
     beep(600);
   }
-  
-  log(`🎲 ${players[current].name} rolled ${d1} + ${d2} = ${d1+d2}`, "log-action");
-  beep(500);
-  rolled = true;
-  
-  handleLanding(current);
-  
-  draw();
-  status();
-  updateButtons();
-  
-  if (gameMode === 'ai' && current === 1) {
-    await aiTurn();
+  p.pos = newPos;
+}
+
+function landOnTile() {
+  let p = players[current];
+  let t = tiles[p.pos];
+  switch (t.type) {
+    case 'go':
+      p.money += 200;
+      log(`🏁 ${p.name} landed on GO — Collect extra $200!`, 'log-income');
+      beep(700);
+      break;
+    case 'property':
+    case 'railroad':
+    case 'utility':
+      if (t.o === -1) {
+        log(`🏠 ${t.name} is available for $${t.price}`, 'log-action');
+      } else if (t.o === current) {
+        log(`😊 ${p.name} landed on own property`, 'log-action');
+      } else {
+        let rent = calcRent(p.pos);
+        p.money -= rent;
+        players[t.o].money += rent;
+        log(`💸 ${p.name} paid $${rent} rent to ${players[t.o].name}`, 'log-expense');
+        beep(300);
+        checkBankruptcy();
+      }
+      break;
+    case 'luck':
+      handleLuck();
+      break;
+    case 'tax':
+      p.money -= t.amount;
+      log(`💸 ${p.name} paid $${t.amount} in taxes`, 'log-expense');
+      beep(300);
+      checkBankruptcy();
+      break;
+    case 'gotojail':
+      p.pos = 10;
+      p.jailTurns = 3;
+      log(`🚓 ${p.name} sent to JAIL!`, 'log-expense');
+      beep(200);
+      break;
+    case 'freeparking':
+      log(`🅿️ ${p.name} resting at Free Parking`, 'log-action');
+      break;
+    case 'jail':
+      log(`👀 ${p.name} is just visiting Jail`, 'log-action');
+      break;
   }
 }
 
-function handleLanding(playerIndex) {
-  let i = players[playerIndex].pos;
-  let t = tiles[i];
-  
-  if (LUCK.includes(i)) {
-    let luck = Math.random() < 0.5;
-    let amount = Math.floor(Math.random() * 100) + 50;
-    
-    if (luck) {
-      players[playerIndex].money += amount;
-      log(`🍀 ${players[playerIndex].name} got LUCKY! +$${amount}`, "log-income");
-      beep(700);
-    } else {
-      players[playerIndex].money -= amount;
-      log(`💸 ${players[playerIndex].name} got UNLUCKY! -$${amount}`, "log-expense");
-      beep(300);
-    }
-    
-    checkBankruptcy();
-    return;
+function calcRent(tileIndex) {
+  let t = tiles[tileIndex];
+  if (t.type === 'utility') {
+    let owned = tiles.filter(tile => tile.type === 'utility' && tile.o === t.o).length;
+    let multiplier = owned === 2 ? 10 : 4;
+    return (diceRoll[0] + diceRoll[1]) * multiplier;
   }
-  
-  if (i === JAIL) {
-    players[playerIndex].jailTurns = 3;
-    log(`🚔 ${players[playerIndex].name} landed in JAIL for 3 turns!`, "log-action");
-    beep(200, 0.3);
-    return;
+  if (t.type === 'railroad') {
+    let owned = tiles.filter(tile => tile.type === 'railroad' && tile.o === t.o).length;
+    return [25, 50, 100, 200][owned - 1];
   }
-  
-  if (t.o === null) {
-    log(`🏘️ Unowned property! Buy or End turn.`, "log-action");
-    return;
-  }
-  
-  if (t.o === playerIndex) {
-    log(`🏠 ${players[playerIndex].name} landed on their own property`, "log-action");
-    return;
-  }
-  
-  // Pay rent
-  let row = Math.floor(i / 5);
-  
-  // Calculate base rent
-  let baseRent;
-  if (row === 0) baseRent = Math.floor(100 / 30); // ~3
-  else if (row === 1) baseRent = Math.floor(150 / 25); // 6
-  else if (row === 2) baseRent = Math.floor(200 / 20); // 10
-  else if (row === 3) baseRent = Math.floor(300 / 15); // 20
-  else if (row === 4) baseRent = Math.floor(400 / 10); // 40
-  
-  let pay;
-  
-  if (t.v) {
-    pay = baseRent * 45; // Villa = 45x base rent
-  } else if (t.h === 3) {
-    pay = baseRent * 37; // 3 houses = 37x base rent
-  } else if (t.h === 2) {
-    pay = baseRent * 15; // 2 houses = 15x base rent
-  } else if (t.h === 1) {
-    pay = baseRent * 5; // 1 house = 5x base rent
+  if (t.v > 0) return t.rent[5];
+  if (t.h > 0) return t.rent[t.h];
+  let sameRow = tiles.filter(tile => tile.type === 'property' && tile.row === t.row);
+  let monopoly = sameRow.every(tile => tile.o === t.o);
+  return monopoly ? t.rent[0] * 2 : t.rent[0];
+}
+
+function handleLuck() {
+  let events = [
+    { msg: '🎉 Bank error in your favor — Collect $200!', money: 200 },
+    { msg: '🏥 Doctor fees — Pay $50', money: -50 },
+    { msg: '💰 You won a lottery — Collect $100!', money: 100 },
+    { msg: '🎂 Birthday! Each player gives you $10', special: 'birthday' },
+    { msg: '🚗 Speeding fine — Pay $15', money: -15 },
+    { msg: '📚 School fees — Pay $150', money: -150 },
+    { msg: '🏆 Win a competition — Collect $25!', money: 25 }
+  ];
+  let event = events[Math.floor(Math.random() * events.length)];
+  let p = players[current];
+  if (event.special === 'birthday') {
+    players.forEach((other, idx) => {
+      if (idx !== current) {
+        other.money -= 10;
+        p.money += 10;
+      }
+    });
   } else {
-    pay = baseRent; // Base rent
+    p.money += event.money;
   }
-  
-  players[playerIndex].money -= pay;
-  players[t.o].money += pay;
-  log(`💸 ${players[playerIndex].name} paid ${players[t.o].name} $${pay} rent`, "log-expense");
-  beep(400, 0.2);
+  log(event.msg, event.money >= 0 ? 'log-income' : 'log-expense');
+  beep(event.money >= 0 ? 600 : 300);
   checkBankruptcy();
 }
 
-function checkBankruptcy() {
-  for (let i = 0; i < numPlayers; i++) {
-    if (players[i].money < 0) {
-      // Try to auto-sell cheapest assets
-      let debt = Math.abs(players[i].money);
-      let ownedProperties = [];
-      
-      // Collect all owned properties with their values
-      for (let tileIdx = 0; tileIdx < 25; tileIdx++) {
-        if (tiles[tileIdx].o === i && !LUCK.includes(tileIdx)) {
-          let value = price(tileIdx) * REF;
-          if (tiles[tileIdx].v) {
-            value += villaCost(tileIdx) * 3 * REF; // 3 houses + villa upgrade
-          } else if (tiles[tileIdx].h > 0) {
-            value += houseCost(tileIdx) * tiles[tileIdx].h * REF;
-          }
-          ownedProperties.push({ tileIdx, value, tile: tiles[tileIdx] });
-        }
-      }
-      
-      // Sort by value (cheapest first)
-      ownedProperties.sort((a, b) => a.value - b.value);
-      
-      // Sell assets starting from cheapest
-      for (let prop of ownedProperties) {
-        if (players[i].money >= 0) break;
-        
-        let tileIdx = prop.tileIdx;
-        let t = tiles[tileIdx];
-        
-        // Sell villa first if exists
-        if (t.v) {
-          let refund = villaCost(tileIdx) * REF;
-          players[i].money += refund;
-          t.v = false;
-          t.h = 3;
-          log(`💰 Auto-sold villa on Tile ${tileIdx} for $${refund}`, "log-income");
-        }
-        
-        // Sell houses one by one
-        while (t.h > 0 && players[i].money < 0) {
-          let refund = houseCost(tileIdx) * REF;
-          players[i].money += refund;
-          t.h--;
-          log(`💰 Auto-sold house on Tile ${tileIdx} for $${refund}`, "log-income");
-        }
-        
-        // Sell property itself if still in debt
-        if (players[i].money < 0) {
-          let refund = price(tileIdx) * REF;
-          players[i].money += refund;
-          t.o = null;
-          log(`💰 Auto-sold property Tile ${tileIdx} for $${refund}`, "log-income");
-        }
-      }
-      
-      // If still bankrupt after selling everything
-      if (players[i].money < 0) {
-        alert(`${players[i].name} went BANKRUPT! Game Over!`);
-        endGame(true);
-      } else {
-        log(`⚠️ ${players[i].name} auto-sold assets to cover debt!`, "log-action");
-        draw();
-      }
-    }
-  }
-}
-
-window.buy = function() {
-  if (gameMode === 'online' && !isMyTurn) return;
-  
-  let i = players[current].pos;
-  
-  // BUG FIX C: Check if property is already owned
-  if (tiles[i].o !== null) {
-    beep(200, 0.1);
-    log(`❌ Tile ${i} is already owned!`, "log-expense");
+function buy() {
+  let p = players[current];
+  let t = tiles[p.pos];
+  if (t.type !== 'property' && t.type !== 'railroad' && t.type !== 'utility') {
+    log('⚠️ Cannot buy this tile', 'log-action');
     return;
   }
-  
-  tiles[i].o = current;
-  players[current].money -= price(i);
-  log(`🏠 ${players[current].name} bought Tile ${i} for $${price(i)}`, "log-action");
-  beep(700);
-  
-  draw();
-  updateButtons();
-  
+  if (t.o !== -1) {
+    log('⚠️ Property already owned', 'log-action');
+    return;
+  }
+  if (p.money < t.price) {
+    log('⚠️ Not enough money!', 'log-expense');
+    return;
+  }
+  if (!p.isAI && !confirm(`Buy ${t.name} for $${t.price}?`)) {
+    log(`🔨 ${p.name} declined to buy — Starting auction!`, 'log-action');
+    startAuction(p.pos);
+    return;
+  }
+  buyProperty();
+}
+
+function buyProperty() {
+  let p = players[current];
+  let t = tiles[p.pos];
+  p.money -= t.price;
+  t.o = current;
+  log(`🏠 ${p.name} bought ${t.name} for $${t.price}`, 'log-income');
+  beep(600);
   if (gameMode === 'online' && isMyTurn) {
     sendAction('buy');
   }
-}
-
-// Legacy house/villa functions (for current tile only) - now redirects to build mode
-window.house = function() {
-  enterBuildMode('house');
-}
-
-window.villa = function() {
-  enterBuildMode('villa');
-}
-
-window.payBail = function() {
-  if (gameMode === 'online' && !isMyTurn) return;
-  if (players[current].jailTurns === 0) return;
-  if (players[current].money < BAIL) return;
-  
-  players[current].money -= BAIL;
-  players[current].jailTurns = 0;
-  log(`🔓 ${players[current].name} paid $${BAIL} bail and is FREE!`, "log-income");
-  beep(600);
-  
-  if (gameMode === 'online' && isMyTurn) {
-    sendAction('bail');
-  }
-  
   draw();
-  status();
+  updatePanels();
   updateButtons();
+  checkBankruptcy();
 }
 
-window.end = function() {
-  let inJail = players[current].jailTurns > 0;
-  
-  if (!rolled && !inJail) return;
-  if (gameMode === 'online' && !isMyTurn) return;
-  
-  if (sellingMode) {
-    toggleSellMode();
+function end() {
+  if (!rolled && players[current].jailTurns === 0) {
+    log('⚠️ Must roll first!', 'log-action');
+    return;
   }
-  
-  if (buildMode) {
-    exitBuildMode();
+  let p = players[current];
+  let t = tiles[p.pos];
+  if (rolled && !p.isAI && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility') && t.o === -1) {
+    log(`🔨 ${t.name} not purchased — Starting auction!`, 'log-action');
+    startAuction(p.pos);
+    return;
   }
-  
-  // If in jail and tried to roll (but didn't get doubles), decrement jail counter
-  if (inJail && rolled) {
-    players[current].jailTurns--;
-    if (players[current].jailTurns === 0) {
-      log(`🎉 ${players[current].name} is FREE from jail!`, "log-income");
-    } else {
-      log(`🚔 ${players[current].name} stays in jail. ${players[current].jailTurns} turns remaining.`, "log-action");
-    }
-  } else if (!inJail) {
-    log(`✅ ${players[current].name} ended turn`, "log-action");
+  let inJail = p.jailTurns > 0;
+  if (sellingMode) toggleSellMode();
+  if (buildMode) exitBuildMode();
+  if (!inJail) {
+    log(`✅ ${p.name} ended turn`, 'log-action');
   }
-  
   rolled = false;
-  
   if (gameMode === 'online' && isMyTurn) {
     sendAction('end');
   }
-  
   switchTurn();
 }
 
 function switchTurn() {
-  current = (current + 1) % numPlayers;
-  rolled = false;
-  
-  // Close any open modals
-  if (buildMode) toggleBuildMode();
-  if (sellingMode) toggleSellMode();
-  
+  current = (current + 1) % players.length;
+  if (gameMode === 'online') {
+    isMyTurn = (current === myPlayerIndex);
+  }
   draw();
-  status();
-  updateButtons();
   updatePanels();
-  
-  // Trigger AI turn if it's an AI player
-  if (gameMode === 'local' && players[current] && players[current].isAI) {
-    setTimeout(aiTurn, 1000);
-  }
-}
-
-// AI Logic
-
-function toggleSound() {
-  soundEnabled = !soundEnabled;
-  let btn = document.getElementById("soundBtn");
-  btn.textContent = soundEnabled ? "🔊 Sound ON" : "🔇 Sound OFF";
-  btn.classList.toggle("active");
-  beep(500, 0.1);
-}
-
-function exportLogs() {
-  let logElement = document.getElementById("log");
-  let timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  
-  let gameState = {
-    timestamp: new Date().toISOString(),
-    gameMode: gameMode,
-    numPlayers: numPlayers,
-    currentPlayer: current,
-    players: players.map((p, idx) => ({
-      name: p.name,
-      money: p.money,
-      position: p.pos,
-      jailTurns: p.jailTurns,
-      totalWealth: wealth(idx),
-      properties: tiles.map((t, i) => t.o === idx ? i : null).filter(x => x !== null)
-    })),
-    tiles: tiles.map((t, idx) => ({
-      index: idx,
-      owner: t.o,
-      houses: t.h,
-      villa: t.v
-    })).filter(t => t.owner !== null),
-    log: logElement.innerText
-  };
-  
-  let content = "MINI MONOPOLY GAME LOG\n";
-  content += "=".repeat(50) + "\n\n";
-  content += "Game State at Export:\n";
-  content += JSON.stringify(gameState, null, 2);
-  content += "\n\n" + "=".repeat(50) + "\n\n";
-  content += "Game Log:\n" + gameState.log;
-  
-  let blob = new Blob([content], { type: 'text/plain' });
-  let url = URL.createObjectURL(blob);
-  let a = document.createElement('a');
-  a.href = url;
-  a.download = `monopoly-log-${timestamp}.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  log("📋 Game logs exported successfully!", "log-action");
-  beep(600, 0.1);
-}
-
-function forfeit() {
-  if (confirm(`Are you sure ${players[current].name} wants to forfeit?`)) {
-    // Remove current player from game
-    let remainingPlayers = players.filter((p, idx) => idx !== current);
-    
-    if (remainingPlayers.length === 1) {
-      // Only one player left - they win
-      alert(`${remainingPlayers[0].name} wins by forfeit! 🎉`);
-      backToMenu();
-    } else {
-      // Multiple players remain
-      alert(`${players[current].name} has forfeited! Game continues with ${remainingPlayers.length} players.`);
-      
-      // Transfer properties to bank (make them unowned)
-      for (let i = 0; i < 25; i++) {
-        if (tiles[i].o === current) {
-          tiles[i].o = null;
-          tiles[i].h = 0;
-          tiles[i].v = false;
-        }
-      }
-      
-      // Adjust other players' owner indices
-      for (let i = 0; i < 25; i++) {
-        if (tiles[i].o !== null && tiles[i].o > current) {
-          tiles[i].o--;
-        }
-      }
-      
-      // Remove player and adjust current turn
-      players.splice(current, 1);
-      numPlayers--;
-      
-      if (current >= numPlayers) {
-        current = 0;
-      }
-      
-      draw();
-      status();
-      updateButtons();
-    }
-  }
-}
-
-function endGame(forfeit = false) {
-  let wealths = players.map((p, idx) => ({ idx, wealth: wealth(idx) }));
-  wealths.sort((a, b) => b.wealth - a.wealth);
-  let winner = forfeit ? wealths.find(w => w.idx !== current).idx : wealths[0].idx;
-  
-  let msg = forfeit 
-    ? `${players[winner].name} wins by forfeit! 🎉`
-    : `🏆 GAME OVER!\n\n${wealths.map(w => `${players[w.idx].name}: $${w.wealth}`).join('\n')}\n\nWinner: ${players[winner].name}! 🎉`;
-  
-  alert(msg);
-  backToMenu();
-}
-
-function resetGame() {
-  tiles = [];
-  current = 0;
-  rolled = false;
-  sellingMode = false;
-  buildMode = null;
-  
-  players = [];
-  for (let i = 0; i < (numPlayers || 2); i++) {
-    players.push({
-      pos: 0,
-      money: START,
-      jailTurns: 0,
-      ...PLAYER_CONFIGS[i]
-    });
-  }
-  
-  isMyTurn = true;
-  myPlayerIndex = 0;
-  document.getElementById('log').innerHTML = '';
-  document.getElementById('build-mode-indicator').style.display = 'none';
-}
-
-
-// ===== AI & TRADING SYSTEM =====
-
-let playerSetup = [];
-let currentTrade = null;
-
-// Player Setup Functions
-function showPlayerSetup() {
-  document.getElementById('menu-screen').style.display = 'none';
-  document.getElementById('player-setup-screen').style.display = 'block';
-}
-
-function setupPlayers(count) {
-  playerSetup = [];
-  const slotsDiv = document.getElementById('player-slots');
-  slotsDiv.innerHTML = '<h4 style="color:#2c3e50; margin-bottom:20px;">Configure Each Player:</h4>';
-  
-  const icons = ['🔵', '🔺', '🟩', '🟧'];
-  const colors = ['Blue', 'Red', 'Green', 'Orange'];
-  
-  for (let i = 0; i < count; i++) {
-    playerSetup.push({ type: 'human', name: `Player ${i+1}` });
-    
-    const slot = document.createElement('div');
-    slot.style.cssText = 'display:grid; grid-template-columns:40px 1fr auto; align-items:center; gap:12px; margin:12px 0; padding:15px; background:#f8f9fa; border-radius:8px; border-left:4px solid ' + ['#2196F3','#F44336','#4CAF50','#FF9800'][i];
-    slot.innerHTML = `
-      <span style="font-size:28px;">${icons[i]}</span>
-      <input type="text" id="p${i}-name" value="Player ${i+1}" style="padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px;">
-      <select id="p${i}-type" onchange="updatePlayerType(${i}, this.value)" style="padding:10px; border:1px solid #ddd; border-radius:6px; font-size:14px; min-width:120px;">
-        <option value="human">👤 Human</option>
-        <option value="ai">🤖 AI</option>
-      </select>
-    `;
-    slotsDiv.appendChild(slot);
-  }
-  
-  document.getElementById('start-btn').style.display = 'inline-block';
-}
-
-function updatePlayerType(index, type) {
-  playerSetup[index].type = type;
-  const nameInput = document.getElementById(`p${index}-name`);
-  if (type === 'ai') {
-    nameInput.value = `🤖 AI ${index + 1}`;
-  } else {
-    nameInput.value = `Player ${index + 1}`;
-  }
-}
-
-function startLocalWithAI() {
-  // Get player configurations
-  playerSetup.forEach((p, i) => {
-    p.name = document.getElementById(`p${i}-name`).value;
-  });
-  
-  // Set number of players
-  numPlayers = playerSetup.length;
-  
-  // Use existing startGame but customize
-  gameMode = 'local';
-  
-  // Hide screens
-  document.getElementById('player-setup-screen').style.display = 'none';
-  document.getElementById('menu-screen').style.display = 'none';
-  document.getElementById('game-screen').style.display = 'block';
-  
-  // Initialize game
-  resetGame();
-  initBoard();
-  
-  // Set player types and names
-  players.forEach((player, i) => {
-    if (playerSetup[i]) {
-      player.name = playerSetup[i].name;
-      player.isAI = playerSetup[i].type === 'ai';
-    }
-  });
-  
-  draw();
-  status();
   updateButtons();
-  
-  log(`🎮 Game started with ${numPlayers} players!`, 'log-action');
-  
-  // If first player is AI, start their turn
-  if (players[0] && players[0].isAI) {
-    setTimeout(aiTurn, 1000);
+  if (players[current].isAI) {
+    setTimeout(() => {
+      roll();
+    }, 1000);
   }
 }
 
-// Enhanced AI Turn Logic
-async function aiTurn() {
-  if (!players[current] || !players[current].isAI || gameMode !== 'local') return;
-  
-  await new Promise(r => setTimeout(r, 500));
-  
-  // Handle jail
-  if (players[current].jailTurns > 0) {
-    if (players[current].money >= BAIL * 2) {
-      payBail();
-      await new Promise(r => setTimeout(r, 800));
+function payBail() {
+  let p = players[current];
+  if (p.jailTurns === 0) {
+    log('⚠️ Not in jail!', 'log-action');
+    return;
+  }
+  if (p.money < 50) {
+    log('⚠️ Not enough money for bail!', 'log-expense');
+    return;
+  }
+  p.money -= 50;
+  p.jailTurns = 0;
+  log(`🔓 ${p.name} paid $50 bail and left jail`, 'log-expense');
+  beep(500);
+  draw();
+  updatePanels();
+  updateButtons();
+}
+
+function toggleSellMode() {
+  sellingMode = !sellingMode;
+  if (buildMode) buildMode = null;
+  if (sellingMode) {
+    log('🏷️ Sell Mode: Click a property you own to sell it', 'log-action');
+  } else {
+    log('❌ Sell Mode cancelled', 'log-action');
+  }
+  draw();
+  updateButtons();
+}
+
+function sellProperty(tileIndex) {
+  let t = tiles[tileIndex];
+  let p = players[current];
+  if (t.o !== current) {
+    log('⚠️ You don\'t own this property', 'log-action');
+    return;
+  }
+  if (t.h > 0 || t.v > 0) {
+    log('⚠️ Must sell buildings first!', 'log-action');
+    return;
+  }
+  let sellPrice = Math.floor(t.price * 0.5);
+  if (!confirm(`Sell ${t.name} for $${sellPrice}?`)) return;
+  t.o = -1;
+  p.money += sellPrice;
+  log(`💵 ${p.name} sold ${t.name} for $${sellPrice}`, 'log-income');
+  beep(500);
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('sell', { tileIndex: tileIndex, playerIndex: current, amount: sellPrice });
+  }
+  sellingMode = false;
+  draw();
+  updatePanels();
+  updateButtons();
+}
+
+function enterBuildMode(type) {
+  if (sellingMode) sellingMode = false;
+  buildMode = type;
+  log(`🏗️ Build Mode (${type === 'house' ? 'House' : 'Hotel'}): Click a property to build`, 'log-action');
+  draw();
+  updateButtons();
+}
+
+function exitBuildMode() {
+  buildMode = null;
+  log('❌ Build Mode cancelled', 'log-action');
+  draw();
+  updateButtons();
+}
+
+function canBuildOn(tileIndex) {
+  let t = tiles[tileIndex];
+  if (t.type !== 'property') return false;
+  if (t.o !== current) return false;
+  let sameRow = tiles.filter(tile => tile.type === 'property' && tile.row === t.row);
+  let monopoly = sameRow.every(tile => tile.o === current);
+  if (!monopoly) return false;
+  if (buildMode === 'house') {
+    if (t.h >= 4) return false;
+    if (t.v > 0) return false;
+    return players[current].money >= t.buildCost;
+  }
+  if (buildMode === 'villa') {
+    if (t.h < 4) return false;
+    if (t.v > 0) return false;
+    return players[current].money >= t.buildCost;
+  }
+  return false;
+}
+
+function buildOnProperty(tileIndex) {
+  let t = tiles[tileIndex];
+  let p = players[current];
+  if (!canBuildOn(tileIndex)) return;
+  if (buildMode === 'house') {
+    t.h++;
+    p.money -= t.buildCost;
+    log(`🏠 ${p.name} built a house on ${t.name} for $${t.buildCost}`, 'log-expense');
+  } else if (buildMode === 'villa') {
+    t.h = 0;
+    t.v++;
+    p.money -= t.buildCost;
+    log(`🏨 ${p.name} built a hotel on ${t.name} for $${t.buildCost}`, 'log-expense');
+  }
+  beep(700);
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('build', { tileIndex: tileIndex, playerIndex: current, buildType: buildMode, cost: t.buildCost });
+  }
+  buildMode = null;
+  draw();
+  updatePanels();
+  updateButtons();
+  checkBankruptcy();
+}
+
+function aiTakeTurn() {
+  let p = players[current];
+  let t = tiles[p.pos];
+  if ((t.type === 'property' || t.type === 'railroad' || t.type === 'utility') && t.o === -1) {
+    if (p.money >= t.price * 1.2) {
+      setTimeout(() => {
+        buyProperty();
+        setTimeout(() => aiEndTurn(), 800);
+      }, 800);
+      return;
+    } else {
+      setTimeout(() => {
+        startAuction(p.pos);
+      }, 800);
+      return;
     }
   }
-  
-  // Roll dice
-  if (!rolled && players[current].jailTurns === 0) {
-    await roll();
-    await new Promise(r => setTimeout(r, 1200));
-  }
-  
-  // Buy property if good value
-  let pos = players[current].pos;
-  if (tiles[pos] && tiles[pos].o === null && !LUCK.includes(pos) && pos !== JAIL_TILE) {
-    let propertyPrice = price(pos);
-    if (players[current].money >= propertyPrice * 2.5) {
-      await new Promise(r => setTimeout(r, 600));
-      buy();
-      await new Promise(r => setTimeout(r, 600));
-    }
-  }
-  
-  // Build houses strategically
-  await aiBuilding();
-  
-  // End turn
-  await new Promise(r => setTimeout(r, 800));
+  setTimeout(() => aiEndTurn(), 1200);
+}
+
+function aiEndTurn() {
   end();
 }
 
-async function aiBuilding() {
-  // Find buildable tiles
-  let buildable = [];
-  tiles.forEach((t, idx) => {
-    if (t.o === current && canBuildHouse(idx) && !t.v) {
-      let cost = houseCost(idx);
-      if (players[current].money >= cost * 3) {
-        buildable.push({ idx, cost, rent: baseRent(idx) });
-      }
-    }
-  });
-  
-  if (buildable.length > 0) {
-    // Sort by rent value (build on valuable properties first)
-    buildable.sort((a, b) => b.rent - a.rent);
-    
-    // Try to build on best property
-    for (let prop of buildable.slice(0, 2)) {
-      if (canBuildHouseEvenly(prop.idx)) {
-        buildOnTile(prop.idx, 'house');
-        await new Promise(r => setTimeout(r, 700));
-        break;
-      }
-    }
-  }
-}
-
-// Trading System
 function openTradeMenu() {
-  if (gameMode !== 'local') {
-    alert('❌ Trading only available in local multiplayer!');
+  if (players[current].isAI) {
+    log('⚠️ AI players cannot initiate trades', 'log-action');
     return;
   }
-  
-  // Count human players
-  const humanPlayers = players.filter((p, idx) => idx !== current && (!p.isAI || p.isAI === false));
-  
-  if (humanPlayers.length === 0) {
-    alert('❌ No other human players to trade with!\n\n(AI players don\'t trade)');
-    return;
-  }
-  
-  // Populate partner selection
-  const partnerSelect = document.getElementById('trade-partner');
-  partnerSelect.innerHTML = '';
-  
-  players.forEach((p, idx) => {
-    if (idx !== current && !p.isAI) {
-      const option = document.createElement('option');
-      option.value = idx;
-      option.textContent = p.name;
-      partnerSelect.appendChild(option);
-    }
-  });
-  
-  updateTradePartner();
   document.getElementById('trade-modal').style.display = 'block';
+  renderTradePartners();
 }
 
-function updateTradePartner() {
-  const partnerId = parseInt(document.getElementById('trade-partner').value);
-  
-  // Populate your properties
-  const yourProps = document.getElementById('your-properties');
-  yourProps.innerHTML = '';
-  
-  let hasProps = false;
-  tiles.forEach((t, idx) => {
-    if (t.o === current) {
-      hasProps = true;
-      const label = document.createElement('label');
-      label.style.display = 'block';
-      label.style.margin = '8px 0';
-      label.style.padding = '6px';
-      label.style.cursor = 'pointer';
-      label.innerHTML = `
-        <input type="checkbox" class="your-prop-check" value="${idx}" onchange="updateTradeSummary()">
-        <strong>Tile ${idx}</strong> (${t.h}🏠${t.v ? '+🏰' : ''}) - $${price(idx)}
-      `;
-      yourProps.appendChild(label);
+function closeTradeMenu() {
+  document.getElementById('trade-modal').style.display = 'none';
+  selectedPartner = null;
+  tradeGiveProperties = [];
+  tradeReceiveProperties = [];
+}
+
+function renderTradePartners() {
+  let list = document.getElementById('trade-partner-list');
+  list.innerHTML = '';
+  players.forEach((p, idx) => {
+    if (idx === current) return;
+    let btn = document.createElement('button');
+    btn.textContent = p.name;
+    btn.style.cssText = `padding:10px 20px;margin:5px;background:${p.color};color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold;`;
+    if (selectedPartner === idx) {
+      btn.style.border = '3px solid black';
+    }
+    btn.onclick = () => selectTradePartner(idx);
+    list.appendChild(btn);
+  });
+}
+
+function selectTradePartner(idx) {
+  selectedPartner = idx;
+  renderTradePartners();
+  renderTradeProperties();
+}
+
+function renderTradeProperties() {
+  if (selectedPartner === null) return;
+  let giveDiv = document.getElementById('trade-give-properties');
+  giveDiv.innerHTML = '';
+  tiles.forEach((t, i) => {
+    if (t.o === current && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility')) {
+      let item = document.createElement('div');
+      item.className = 'property-item';
+      if (tradeGiveProperties.includes(i)) item.classList.add('selected');
+      item.textContent = t.name;
+      item.onclick = () => toggleGiveProperty(i);
+      giveDiv.appendChild(item);
     }
   });
-  
-  if (!hasProps) {
-    yourProps.innerHTML = '<em style="color:#999;">No properties to trade</em>';
-  }
-  
-  // Populate their properties
-  const theirProps = document.getElementById('their-properties');
-  theirProps.innerHTML = '';
-  
-  let hasTheirProps = false;
-  tiles.forEach((t, idx) => {
-    if (t.o === partnerId) {
-      hasTheirProps = true;
-      const label = document.createElement('label');
-      label.style.display = 'block';
-      label.style.margin = '8px 0';
-      label.style.padding = '6px';
-      label.style.cursor = 'pointer';
-      label.innerHTML = `
-        <input type="checkbox" class="their-prop-check" value="${idx}" onchange="updateTradeSummary()">
-        <strong>Tile ${idx}</strong> (${t.h}🏠${t.v ? '+🏰' : ''}) - $${price(idx)}
-      `;
-      theirProps.appendChild(label);
+  let receiveDiv = document.getElementById('trade-receive-properties');
+  receiveDiv.innerHTML = '';
+  tiles.forEach((t, i) => {
+    if (t.o === selectedPartner && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility')) {
+      let item = document.createElement('div');
+      item.className = 'property-item';
+      if (tradeReceiveProperties.includes(i)) item.classList.add('selected');
+      item.textContent = t.name;
+      item.onclick = () => toggleReceiveProperty(i);
+      receiveDiv.appendChild(item);
     }
   });
-  
-  if (!hasTheirProps) {
-    theirProps.innerHTML = '<em style="color:#999;">No properties available</em>';
-  }
-  
-  updateTradeSummary();
 }
 
-function updateTradeSummary() {
-  const yourCash = parseInt(document.getElementById('your-cash').value) || 0;
-  const theirCash = parseInt(document.getElementById('their-cash').value) || 0;
-  
-  const yourProps = Array.from(document.querySelectorAll('.your-prop-check:checked')).map(c => parseInt(c.value));
-  const theirProps = Array.from(document.querySelectorAll('.their-prop-check:checked')).map(c => parseInt(c.value));
-  
-  let summary = '<div style="color:#2c3e50;"><strong>You give:</strong><br>';
-  if (yourCash > 0) summary += `💰 $${yourCash}<br>`;
-  yourProps.forEach(p => summary += `🏠 Tile ${p}<br>`);
-  if (yourCash === 0 && yourProps.length === 0) summary += '<em style="color:#999;">Nothing</em><br>';
-  
-  summary += '<br><strong>You receive:</strong><br>';
-  if (theirCash > 0) summary += `💰 $${theirCash}<br>`;
-  theirProps.forEach(p => summary += `🏠 Tile ${p}<br>`);
-  if (theirCash === 0 && theirProps.length === 0) summary += '<em style="color:#999;">Nothing</em>';
-  summary += '</div>';
-  
-  document.getElementById('trade-summary').innerHTML = summary;
+function toggleGiveProperty(idx) {
+  let i = tradeGiveProperties.indexOf(idx);
+  if (i > -1) {
+    tradeGiveProperties.splice(i, 1);
+  } else {
+    tradeGiveProperties.push(idx);
+  }
+  renderTradeProperties();
 }
 
-function proposeTrade() {
-  const partnerId = parseInt(document.getElementById('trade-partner').value);
-  const yourCash = parseInt(document.getElementById('your-cash').value) || 0;
-  const theirCash = parseInt(document.getElementById('their-cash').value) || 0;
-  const yourProps = Array.from(document.querySelectorAll('.your-prop-check:checked')).map(c => parseInt(c.value));
-  const theirProps = Array.from(document.querySelectorAll('.their-prop-check:checked')).map(c => parseInt(c.value));
-  
-  // Validation
-  if (yourCash === 0 && yourProps.length === 0 && theirCash === 0 && theirProps.length === 0) {
-    alert('❌ Empty trade! Add something to the offer.');
+function toggleReceiveProperty(idx) {
+  let i = tradeReceiveProperties.indexOf(idx);
+  if (i > -1) {
+    tradeReceiveProperties.splice(i, 1);
+  } else {
+    tradeReceiveProperties.push(idx);
+  }
+  renderTradeProperties();
+}
+
+function sendTrade() {
+  if (selectedPartner === null) {
+    alert('Select a trading partner first!');
     return;
   }
-  
-  if (yourCash > players[current].money) {
-    alert(`❌ You don't have $${yourCash}!\nYou only have $${players[current].money}`);
+  let giveMoney = parseInt(document.getElementById('trade-give-money').value) || 0;
+  let receiveMoney = parseInt(document.getElementById('trade-receive-money').value) || 0;
+  if (tradeGiveProperties.length === 0 && tradeReceiveProperties.length === 0 && giveMoney === 0 && receiveMoney === 0) {
+    alert('Add something to the trade!');
     return;
   }
-  
-  if (theirCash > players[partnerId].money) {
-    alert(`❌ ${players[partnerId].name} doesn't have $${theirCash}!\nThey only have $${players[partnerId].money}`);
-    return;
-  }
-  
-  // Create trade object
   currentTrade = {
     from: current,
-    to: partnerId,
-    fromCash: yourCash,
-    toCash: theirCash,
-    fromProps: yourProps,
-    toProps: theirProps
+    to: selectedPartner,
+    giveProperties: [...tradeGiveProperties],
+    receiveProperties: [...tradeReceiveProperties],
+    giveMoney: giveMoney,
+    receiveMoney: receiveMoney
   };
-  
-  document.getElementById('trade-modal').style.display = 'none';
-  showTradeProposal();
+  closeTradeMenu();
+  if (players[selectedPartner].isAI) {
+    setTimeout(() => evaluateAITrade(), 1000);
+  } else {
+    showTradeOffer();
+  }
 }
 
-function showTradeProposal() {
-  const trade = currentTrade;
-  let details = `<p style="font-size:16px; text-align:center; margin-bottom:20px;">
-    <strong style="color:#2196F3;">${players[trade.from].name}</strong> wants to trade with 
-    <strong style="color:#F44336;">${players[trade.to].name}</strong>
-  </p>`;
-  
-  details += '<div style="background:#e3f2fd; padding:15px; border-radius:8px; margin:15px 0; border-left:4px solid #2196F3;">';
-  details += `<strong style="color:#1976d2;">${players[trade.from].name} gives:</strong><br>`;
-  if (trade.fromCash > 0) details += `💰 $${trade.fromCash}<br>`;
-  trade.fromProps.forEach(p => details += `🏠 Tile ${p}<br>`);
-  if (trade.fromCash === 0 && trade.fromProps.length === 0) details += '<em>Nothing</em><br>';
-  details += '</div>';
-  
-  details += '<div style="background:#ffebee; padding:15px; border-radius:8px; margin:15px 0; border-left:4px solid #F44336;">';
-  details += `<strong style="color:#c62828;">${players[trade.to].name} gives:</strong><br>`;
-  if (trade.toCash > 0) details += `💰 $${trade.toCash}<br>`;
-  trade.toProps.forEach(p => details += `🏠 Tile ${p}<br>`);
-  if (trade.toCash === 0 && trade.toProps.length === 0) details += '<em>Nothing</em>';
-  details += '</div>';
-  
-  document.getElementById('proposal-details').innerHTML = details;
-  document.getElementById('trade-proposal-modal').style.display = 'block';
+function showTradeOffer() {
+  let trade = currentTrade;
+  document.getElementById('trade-offer-from').textContent = `Trade offer from ${players[trade.from].name}:`;
+  let theyGive = document.getElementById('trade-offer-they-give');
+  theyGive.innerHTML = '';
+  if (trade.giveMoney > 0) {
+    let money = document.createElement('div');
+    money.textContent = `💵 $${trade.giveMoney}`;
+    theyGive.appendChild(money);
+  }
+  trade.giveProperties.forEach(i => {
+    let prop = document.createElement('div');
+    prop.textContent = `🏠 ${tiles[i].name}`;
+    theyGive.appendChild(prop);
+  });
+  if (trade.giveMoney === 0 && trade.giveProperties.length === 0) {
+    theyGive.textContent = 'Nothing';
+  }
+  let youGive = document.getElementById('trade-offer-you-give');
+  youGive.innerHTML = '';
+  if (trade.receiveMoney > 0) {
+    let money = document.createElement('div');
+    money.textContent = `💵 $${trade.receiveMoney}`;
+    youGive.appendChild(money);
+  }
+  trade.receiveProperties.forEach(i => {
+    let prop = document.createElement('div');
+    prop.textContent = `🏠 ${tiles[i].name}`;
+    youGive.appendChild(prop);
+  });
+  if (trade.receiveMoney === 0 && trade.receiveProperties.length === 0) {
+    youGive.textContent = 'Nothing';
+  }
+  document.getElementById('trade-offer-modal').style.display = 'block';
 }
 
 function acceptTrade() {
-  const trade = currentTrade;
-  
-  // Execute trade
-  players[trade.from].money -= trade.fromCash;
-  players[trade.from].money += trade.toCash;
-  players[trade.to].money -= trade.toCash;
-  players[trade.to].money += trade.fromCash;
-  
-  // Transfer properties
-  trade.fromProps.forEach(idx => {
-    tiles[idx].o = trade.to;
+  let trade = currentTrade;
+  players[trade.from].money -= trade.giveMoney;
+  players[trade.to].money += trade.giveMoney;
+  players[trade.to].money -= trade.receiveMoney;
+  players[trade.from].money += trade.receiveMoney;
+  trade.giveProperties.forEach(i => {
+    tiles[i].o = trade.to;
   });
-  
-  trade.toProps.forEach(idx => {
-    tiles[idx].o = trade.from;
+  trade.receiveProperties.forEach(i => {
+    tiles[i].o = trade.from;
   });
-  
-  log(`🤝 Trade completed: ${players[trade.from].name} ↔ ${players[trade.to].name}!`, 'log-action');
-  
-  document.getElementById('trade-proposal-modal').style.display = 'none';
+  log(`🤝 Trade accepted between ${players[trade.from].name} and ${players[trade.to].name}!`, 'log-income');
+  beep(700);
+  document.getElementById('trade-offer-modal').style.display = 'none';
   currentTrade = null;
-  
   draw();
   updatePanels();
 }
 
 function rejectTrade() {
-  log(`❌ ${players[currentTrade.to].name} rejected the trade proposal`, 'log-action');
-  document.getElementById('trade-proposal-modal').style.display = 'none';
+  log(`❌ Trade rejected by ${players[currentTrade.to].name}`, 'log-action');
+  document.getElementById('trade-offer-modal').style.display = 'none';
   currentTrade = null;
 }
 
-function closeTradeMenu() {
-  document.getElementById('trade-modal').style.display = 'none';
+function evaluateAITrade() {
+  let trade = currentTrade;
+  let giveValue = trade.giveMoney;
+  trade.giveProperties.forEach(i => {
+    giveValue += tiles[i].price;
+  });
+  let receiveValue = trade.receiveMoney;
+  trade.receiveProperties.forEach(i => {
+    receiveValue += tiles[i].price;
+  });
+  if (receiveValue >= giveValue * 0.9) {
+    acceptTrade();
+  } else {
+    rejectTrade();
+  }
 }
 
-// Keyboard shortcuts
+function startAuction(tileIndex) {
+  let t = tiles[tileIndex];
+  auction = {
+    tileIndex: tileIndex,
+    tilePrice: t.price,
+    currentBid: 0,
+    highBidder: null,
+    participants: [],
+    activeSeat: 0,
+    auctionLog: [],
+    timerInterval: null
+  };
+  players.forEach((p, idx) => {
+    auction.participants.push({
+      playerIndex: idx,
+      passed: false,
+      isAI: p.isAI
+    });
+  });
+  auction.activeSeat = (current + 1) % players.length;
+  document.getElementById('auction-modal').style.display = 'block';
+  renderAuction();
+  advanceAuctionIfAI();
+}
+
+function renderAuction() {
+  if (!auction) return;
+  let t = tiles[auction.tileIndex];
+  document.getElementById('auction-tile-name').textContent = t.name;
+  document.getElementById('auction-market-price').textContent = `Market Price: $${auction.tilePrice}`;
+  let bidDiv = document.getElementById('auction-current-bid');
+  if (auction.currentBid === 0) {
+    bidDiv.textContent = 'No bids yet — starts at $1';
+  } else {
+    bidDiv.textContent = `Current Bid: $${auction.currentBid}`;
+    if (auction.highBidder !== null) {
+      let bidder = auction.participants[auction.highBidder];
+      bidDiv.textContent += ` by ${players[bidder.playerIndex].name}`;
+    }
+  }
+  resetAuctionTimer();
+  let grid = document.getElementById('auction-players-grid');
+  grid.innerHTML = '';
+  auction.participants.forEach((part, seat) => {
+    let p = players[part.playerIndex];
+    let isActive = seat === auction.activeSeat && !part.passed;
+    let isBidder = seat === auction.highBidder;
+    let isOut = part.passed;
+    let row = document.createElement('div');
+    row.className = 'auction-player-row' + (isActive ? ' current-bidder' : '') + (isOut ? ' passed' : '') + (part.isAI ? ' ai-row' : '');
+    let nextBid = auction.currentBid + 50;
+    let canAfford = p.money >= nextBid;
+    let statusHtml = '';
+    if (isOut) {
+      statusHtml = '<span class="auction-player-status out">⛔ Passed</span>';
+    } else if (isBidder) {
+      statusHtml = '<span class="auction-player-status">🏆 Winning</span>';
+    } else if (isActive) {
+      statusHtml = '<span class="auction-player-status" style="color:#e74c3c;">⏳ Your turn</span>';
+    }
+    let buttonsHtml = '';
+    if (!isOut && isActive && !part.isAI) {
+      buttonsHtml = `<button class="auction-bid-btn btn-bid" onclick="auctionBid()" ${!canAfford ? 'disabled' : ''}>Bid $${nextBid}</button><button class="auction-bid-btn btn-pass" onclick="auctionPass()">Pass</button>`;
+    }
+    row.innerHTML = `<div><div class="auction-player-name" style="color:${p.color}">${p.name}${part.isAI ? ' 🤖' : ''}</div><div class="auction-player-cash">Cash: $${p.money}</div></div>${statusHtml}<div style="display:flex;gap:6px;">${buttonsHtml}</div>`;
+    grid.appendChild(row);
+  });
+  let logDiv = document.getElementById('auction-log');
+  logDiv.innerHTML = auction.auctionLog.slice(-8).join('<br>');
+  logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function auctionLog(msg) {
+  auction.auctionLog.push(msg);
+}
+
+function resetAuctionTimer() {
+  if (auction.timerInterval) clearInterval(auction.timerInterval);
+  let seconds = 20;
+  let bar = document.getElementById('auction-timer-bar');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  setTimeout(() => {
+    bar.style.transition = 'width 1s linear';
+  }, 50);
+  auction.timerInterval = setInterval(() => {
+    seconds--;
+    let pct = (seconds / 20) * 100;
+    bar.style.width = pct + '%';
+    bar.style.background = seconds > 10 ? 'linear-gradient(90deg, #27ae60, #f39c12)' : 'linear-gradient(90deg, #e74c3c, #c0392b)';
+    if (seconds <= 0) {
+      clearInterval(auction.timerInterval);
+      let part = auction.participants[auction.activeSeat];
+      if (!part.passed && !part.isAI) {
+        auctionLog(`⏰ ${players[part.playerIndex].name} timed out — auto-passed`);
+        auctionPass();
+      }
+    }
+  }, 1000);
+}
+
+function calcNextBid() {
+  return auction.currentBid + 50;
+}
+
+function auctionBid() {
+  if (!auction) return;
+  let seat = auction.activeSeat;
+  let part = auction.participants[seat];
+  let p = players[part.playerIndex];
+  let nextBid = calcNextBid();
+  if (p.money < nextBid) {
+    auctionLog(`❌ ${p.name} can't afford $${nextBid}!`);
+    renderAuction();
+    return;
+  }
+  auction.currentBid = nextBid;
+  auction.highBidder = seat;
+  auctionLog(`💰 ${p.name} bids $${nextBid}`);
+  beep(600);
+  advanceAuctionSeat();
+}
+
+function auctionPass() {
+  if (!auction) return;
+  let seat = auction.activeSeat;
+  let part = auction.participants[seat];
+  auctionLog(`🙅 ${players[part.playerIndex].name} passes`);
+  auction.participants[seat].passed = true;
+  beep(300);
+  advanceAuctionSeat();
+}
+
+function advanceAuctionSeat() {
+  if (auction.timerInterval) clearInterval(auction.timerInterval);
+  let active = auction.participants.filter(p => !p.passed);
+  if (active.length === 1) {
+    finishAuction(active[0]);
+    return;
+  }
+  if (active.length === 0) {
+    finishAuction(null);
+    return;
+  }
+  let next = (auction.activeSeat + 1) % auction.participants.length;
+  let loops = 0;
+  while (auction.participants[next].passed) {
+    next = (next + 1) % auction.participants.length;
+    loops++;
+    if (loops > auction.participants.length) {
+      finishAuction(null);
+      return;
+    }
+  }
+  auction.activeSeat = next;
+  renderAuction();
+  advanceAuctionIfAI();
+}
+
+function advanceAuctionIfAI() {
+  if (!auction) return;
+  let part = auction.participants[auction.activeSeat];
+  if (!part || part.passed || !part.isAI) return;
+  setTimeout(() => {
+    if (!auction) return;
+    let p = players[part.playerIndex];
+    let nextBid = calcNextBid();
+    let bidThreshold = auction.tilePrice * 0.75;
+    let shouldBid = nextBid <= bidThreshold && p.money >= nextBid * 2 && Math.random() > 0.25;
+    if (shouldBid) {
+      auctionBid();
+    } else {
+      auctionPass();
+    }
+  }, 700 + Math.random() * 500);
+}
+
+function finishAuction(winner) {
+  if (auction.timerInterval) clearInterval(auction.timerInterval);
+  if (!winner || auction.highBidder === null) {
+    auctionLog('🏚️ No bids — property remains unowned.');
+    log(`🏚️ Auction for Tile ${auction.tileIndex} ended with no winner. Property stays unowned.`, 'log-action');
+    beep(200);
+    closeAuction();
+    return;
+  }
+  let pIdx = winner.playerIndex;
+  let finalPrice = auction.currentBid;
+  players[pIdx].money -= finalPrice;
+  tiles[auction.tileIndex].o = pIdx;
+  auctionLog(`🎉 ${players[pIdx].name} won Tile ${auction.tileIndex} for $${finalPrice}!`);
+  log(`🔨 ${players[pIdx].name} won auction for Tile ${auction.tileIndex} at $${finalPrice}! (Market: $${auction.tilePrice})`, 'log-income');
+  beep(700);
+  beep(900);
+  renderAuction();
+  setTimeout(() => {
+    closeAuction();
+    checkBankruptcy();
+  }, 1200);
+}
+
+function closeAuction() {
+  if (auction && auction.timerInterval) clearInterval(auction.timerInterval);
+  auction = null;
+  document.getElementById('auction-modal').style.display = 'none';
+  draw();
+  updatePanels();
+  updateButtons();
+  _endTurnAfterAuction();
+}
+
+function _endTurnAfterAuction() {
+  let inJail = players[current].jailTurns > 0;
+  if (sellingMode) toggleSellMode();
+  if (buildMode) exitBuildMode();
+  if (!inJail) {
+    log(`✅ ${players[current].name} ended turn`, 'log-action');
+  }
+  rolled = false;
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('end');
+  }
+  switchTurn();
+}
+
 document.addEventListener('keydown', function(e) {
-  // Don't trigger if typing in an input field
   if (e.target.tagName === 'INPUT') return;
-  
-  // Don't trigger if game hasn't started
   if (!gameMode) return;
-  
-  // Don't trigger if not your turn in online mode
   if (gameMode === 'online' && !isMyTurn) return;
-  
   let key = e.key.toLowerCase();
-  
   switch(key) {
     case ' ':
       e.preventDefault();
@@ -2394,7 +1566,6 @@ document.addEventListener('keydown', function(e) {
         roll();
       }
       break;
-      
     case 'enter':
       e.preventDefault();
       let endBtn = document.getElementById('endBtn');
@@ -2402,19 +1573,16 @@ document.addEventListener('keydown', function(e) {
         end();
       }
       break;
-      
     case 'b':
       e.preventDefault();
       let buyBtn = document.getElementById('buyBtn');
       let bailBtn = document.getElementById('bailBtn');
-      // Prioritize Buy over Bail
       if (buyBtn && !buyBtn.disabled) {
         buy();
       } else if (bailBtn && !bailBtn.disabled) {
         payBail();
       }
       break;
-      
     case 's':
       e.preventDefault();
       let sellBtn = document.getElementById('sellBtn');
@@ -2422,30 +1590,27 @@ document.addEventListener('keydown', function(e) {
         toggleSellMode();
       }
       break;
-	  case 't':
-	  e.preventDefault();
-	  let tradeBtn = document.getElementById('tradeBtn');
-	  if (tradeBtn && !tradeBtn.disabled) {
-		openTradeMenu();
-	  }
-	  break;
-      
+    case 't':
+      e.preventDefault();
+      let tradeBtn = document.getElementById('tradeBtn');
+      if (tradeBtn && !tradeBtn.disabled) {
+        openTradeMenu();
+      }
+      break;
     case 'h':
       e.preventDefault();
-      let houseBtn = document.getElementById('houseBtn');
+      let houseBtn = document.getElementById('buildBtn');
       if (houseBtn && !houseBtn.disabled) {
         enterBuildMode('house');
       }
       break;
-      
     case 'v':
       e.preventDefault();
-      let villaBtn = document.getElementById('villaBtn');
+      let villaBtn = document.getElementById('buildBtn');
       if (villaBtn && !villaBtn.disabled) {
         enterBuildMode('villa');
       }
       break;
-      
     case 'escape':
       e.preventDefault();
       if (buildMode) {
@@ -2457,10 +1622,115 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// Initialize
-// Don't call resetGame on load - gameMode needs to stay null until game starts
+function updatePanels() {
+  let panel = document.getElementById('panel');
+  panel.innerHTML = '<h3>Players</h3>';
+  players.forEach((p, idx) => {
+    let card = document.createElement('div');
+    card.className = 'player-card';
+    card.style.borderColor = p.color;
+    if (idx === current) card.classList.add('active');
+    let name = document.createElement('div');
+    name.style.fontWeight = 'bold';
+    name.style.fontSize = '16px';
+    name.textContent = p.name;
+    let money = document.createElement('div');
+    money.textContent = `💰 $${p.money}`;
+    let properties = tiles.filter(t => t.o === idx && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility'));
+    let propCount = document.createElement('div');
+    propCount.style.fontSize = '12px';
+    propCount.style.color = '#7f8c8d';
+    propCount.textContent = `🏠 ${properties.length} properties`;
+    card.appendChild(name);
+    card.appendChild(money);
+    card.appendChild(propCount);
+    if (p.jailTurns > 0) {
+      let jail = document.createElement('div');
+      jail.textContent = `🔒 In Jail (${p.jailTurns} turns)`;
+      jail.style.color = '#e74c3c';
+      jail.style.fontWeight = 'bold';
+      card.appendChild(jail);
+    }
+    panel.appendChild(card);
+  });
+  let status = document.getElementById('status');
+  if (gameMode === 'online') {
+    status.textContent = isMyTurn ? `Your turn (${players[current].name})` : `${players[current].name}'s turn`;
+  } else {
+    status.textContent = `${players[current].name}'s Turn`;
+  }
+}
 
+function updateButtons() {
+  let p = players[current];
+  let t = tiles[p.pos];
+  let canPlay = (gameMode !== 'online' || isMyTurn);
+  document.getElementById('rollBtn').disabled = rolled || !canPlay;
+  let canBuy = rolled && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility') && t.o === -1 && p.money >= t.price && canPlay;
+  document.getElementById('buyBtn').disabled = !canBuy;
+  document.getElementById('endBtn').disabled = !rolled && p.jailTurns === 0 || !canPlay;
+  document.getElementById('sellBtn').disabled = !canPlay;
+  document.getElementById('buildBtn').disabled = !canPlay;
+  document.getElementById('tradeBtn').disabled = !canPlay;
+  let bailBtn = document.getElementById('bailBtn');
+  if (p.jailTurns > 0 && canPlay) {
+    bailBtn.style.display = 'inline-block';
+    bailBtn.disabled = p.money < 50;
+  } else {
+    bailBtn.style.display = 'none';
+  }
+}
+
+function checkBankruptcy() {
+  players.forEach((p, idx) => {
+    if (p.money < 0) {
+      log(`💀 ${p.name} is BANKRUPT!`, 'log-expense');
+      beep(200);
+      beep(200);
+      beep(200);
+      tiles.forEach(t => {
+        if (t.o === idx) {
+          t.o = -1;
+          t.h = 0;
+          t.v = 0;
+        }
+      });
+      let activePlayers = players.filter(p => p.money >= 0);
+      if (activePlayers.length === 1) {
+        setTimeout(() => {
+          alert(`🏆 ${activePlayers[0].name} WINS!`);
+          backToMenu();
+        }, 1000);
+      }
+    }
+  });
+}
+
+function log(message, type = '') {
+  logEntries.push({ msg: message, type: type });
+  let logDiv = document.getElementById('log');
+  let entry = document.createElement('div');
+  entry.className = 'log-entry ' + type;
+  entry.textContent = message;
+  logDiv.appendChild(entry);
+  logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+function beep(freq) {
+  if (typeof AudioContext !== 'undefined') {
+    try {
+      let ctx = new AudioContext();
+      let osc = ctx.createOscillator();
+      let gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      gain.gain.value = 0.1;
+      osc.start();
+      setTimeout(() => osc.stop(), 100);
+    } catch (e) {}
+  }
+}
 </script>
-
 </body>
 </html>
