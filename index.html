@@ -104,6 +104,31 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 .tile.buildable { cursor: pointer; box-shadow: 0 0 10px rgba(255, 152, 0, 0.8) !important; border: 3px solid #FF9800 !important; }
 .tile.buildable:hover { transform: translateY(-4px) !important; box-shadow: 0 6px 12px rgba(255, 152, 0, 0.9) !important; }
 
+.tile.mortgageable { cursor: pointer; box-shadow: 0 0 10px rgba(255, 193, 7, 0.8) !important; border: 3px solid #FFC107 !important; }
+.tile.mortgageable:hover { transform: translateY(-4px) !important; box-shadow: 0 6px 12px rgba(255, 193, 7, 0.9) !important; }
+.tile.unmortgageable { cursor: pointer; box-shadow: 0 0 10px rgba(63, 81, 181, 0.8) !important; border: 3px solid #3F51B5 !important; }
+.tile.unmortgageable:hover { transform: translateY(-4px) !important; box-shadow: 0 6px 12px rgba(63, 81, 181, 0.9) !important; }
+
+.tile.mortgaged {
+  opacity: 0.6;
+  position: relative;
+}
+.tile.mortgaged::after {
+  content: '🏦 MORTGAGED';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  background: rgba(255, 0, 0, 0.9);
+  color: white;
+  padding: 3px 5px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 7px;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
 .pawn {
   display: inline-block; width: 16px; height: 16px; border-radius: 50%;
   margin: 2px; border: 2px solid #333; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -143,6 +168,8 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 #buildBtn { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; }
 #bailBtn { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333; }
 #tradeBtn { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+#mortgageBtn { background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%); color: white; }
+#unmortgageBtn { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
 
 #panel {
   background: white; padding: 15px; border-radius: 12px;
@@ -360,6 +387,8 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
         <button id="buildBtn" onclick="enterBuildMode('house')">🏠 Build (H/V)</button>
         <button id="bailBtn" onclick="payBail()" style="display:none;">💸 Pay Bail $50 (B)</button>
         <button id="tradeBtn" onclick="openTradeMenu()">🤝 Trade (T)</button>
+        <button id="mortgageBtn" onclick="enterMortgageMode()">🏦 Mortgage (M)</button>
+        <button id="unmortgageBtn" onclick="enterUnmortgageMode()">💳 Unmortgage (U)</button>
       </div>
     </div>
     <div id="board"></div>
@@ -432,6 +461,7 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 
 <script>
 // Game state
+const INTEREST_RATE = 0.1; // 10% interest on unmortgaging
 let tiles = [];
 let players = [];
 let current = 0;
@@ -439,6 +469,8 @@ let rolled = false;
 let diceRoll = [0, 0];
 let sellingMode = false;
 let buildMode = null;
+let mortgageMode = false;
+let unmortgageMode = false;
 let gameMode = null;
 let numPlayers = 0;
 let logEntries = [];
@@ -499,7 +531,7 @@ const MONOPOLY_CLASSIC = [
 ];
 
 function resetGame(numP = 2) {
-  tiles = MONOPOLY_CLASSIC.map((template, i) => ({ ...template, o: -1, h: 0, v: 0 }));
+  tiles = MONOPOLY_CLASSIC.map((template, i) => ({ ...template, o: -1, h: 0, v: 0, mortgaged: false }));
   const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
   const names = ['Red', 'Blue', 'Green', 'Orange'];
   players = [];
@@ -517,6 +549,8 @@ function resetGame(numP = 2) {
   diceRoll = [0, 0];
   sellingMode = false;
   buildMode = null;
+  mortgageMode = false;
+  unmortgageMode = false;
   logEntries = [];
   draw();
   updatePanels();
@@ -679,6 +713,18 @@ function handleRemoteAction(message) {
       draw();
       updatePanels();
       break;
+    case 'mortgage':
+      tiles[data.tileIndex].mortgaged = true;
+      players[data.playerIndex].money += data.amount;
+      draw();
+      updatePanels();
+      break;
+    case 'unmortgage':
+      tiles[data.tileIndex].mortgaged = false;
+      players[data.playerIndex].money -= data.amount;
+      draw();
+      updatePanels();
+      break;
   }
 }
 
@@ -694,6 +740,7 @@ function draw() {
     let div = document.createElement('div');
     div.className = 'tile';
     div.dataset.index = i;
+    if (t.mortgaged) div.classList.add('mortgaged');
     if (t.type === 'go') div.classList.add('go-tile');
     else if (t.type === 'jail') div.classList.add('jail-tile');
     else if (t.type === 'gotojail') div.classList.add('gotojail-tile');
@@ -794,6 +841,14 @@ function draw() {
       div.classList.add('buildable');
       div.onclick = () => buildOnProperty(i);
     }
+    if (mortgageMode && t.o === current && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility') && !t.mortgaged && t.h === 0 && t.v === 0) {
+      div.classList.add('mortgageable');
+      div.onclick = () => mortgageProperty(i);
+    }
+    if (unmortgageMode && t.o === current && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility') && t.mortgaged) {
+      div.classList.add('unmortgageable');
+      div.onclick = () => unmortgageProperty(i);
+    }
     board.appendChild(div);
   }
 }
@@ -818,7 +873,17 @@ function roll() {
       landOnTile();
     } else {
       p.jailTurns--;
-      log(`🎲 ${p.name} rolled [${diceRoll[0]}, ${diceRoll[1]}] — ${p.jailTurns} turns left in jail`, 'log-action');
+      if (p.jailTurns === 0) {
+        // Third turn failed - must pay $50 and move
+        p.money -= 50;
+        log(`🎲 ${p.name} rolled [${diceRoll[0]}, ${diceRoll[1]}] — Failed 3rd attempt. Must pay $50 fine and move.`, 'log-expense');
+        beep(300);
+        movePlayer(p.pos + diceRoll[0] + diceRoll[1]);
+        landOnTile();
+        checkBankruptcy();
+      } else {
+        log(`🎲 ${p.name} rolled [${diceRoll[0]}, ${diceRoll[1]}] — ${p.jailTurns} turns left in jail`, 'log-action');
+      }
     }
     draw();
     updatePanels();
@@ -870,6 +935,8 @@ function landOnTile() {
         log(`🏠 ${t.name} is available for $${t.price}`, 'log-action');
       } else if (t.o === current) {
         log(`😊 ${p.name} landed on own property`, 'log-action');
+      } else if (t.mortgaged) {
+        log(`🏦 ${t.name} is mortgaged — No rent due`, 'log-action');
       } else {
         let rent = calcRent(p.pos);
         p.money -= rent;
@@ -998,6 +1065,8 @@ function end() {
   let inJail = p.jailTurns > 0;
   if (sellingMode) toggleSellMode();
   if (buildMode) exitBuildMode();
+  if (mortgageMode) exitMortgageMode();
+  if (unmortgageMode) exitUnmortgageMode();
   if (!inJail) {
     log(`✅ ${p.name} ended turn`, 'log-action');
   }
@@ -1066,7 +1135,6 @@ function sellProperty(tileIndex) {
     return;
   }
   let sellPrice = Math.floor(t.price * 0.5);
-  if (!confirm(`Sell ${t.name} for $${sellPrice}?`)) return;
   t.o = -1;
   p.money += sellPrice;
   log(`💵 ${p.name} sold ${t.name} for $${sellPrice}`, 'log-income');
@@ -1140,6 +1208,100 @@ function buildOnProperty(tileIndex) {
   checkBankruptcy();
 }
 
+function enterMortgageMode() {
+  if (sellingMode) sellingMode = false;
+  if (buildMode) buildMode = null;
+  if (unmortgageMode) unmortgageMode = false;
+  mortgageMode = true;
+  log('🏦 Mortgage Mode: Click a property to mortgage for cash', 'log-action');
+  draw();
+  updateButtons();
+}
+
+function exitMortgageMode() {
+  mortgageMode = false;
+  log('❌ Mortgage Mode cancelled', 'log-action');
+  draw();
+  updateButtons();
+}
+
+function mortgageProperty(tileIndex) {
+  let t = tiles[tileIndex];
+  let p = players[current];
+  if (t.o !== current) {
+    log('⚠️ You don\'t own this property', 'log-action');
+    return;
+  }
+  if (t.mortgaged) {
+    log('⚠️ Property is already mortgaged', 'log-action');
+    return;
+  }
+  if (t.h > 0 || t.v > 0) {
+    log('⚠️ Must sell buildings first before mortgaging!', 'log-action');
+    return;
+  }
+  let mortgageValue = Math.floor(t.price * 0.5);
+  t.mortgaged = true;
+  p.money += mortgageValue;
+  log(`🏦 ${p.name} mortgaged ${t.name} for $${mortgageValue}`, 'log-income');
+  beep(500);
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('mortgage', { tileIndex: tileIndex, playerIndex: current, amount: mortgageValue });
+  }
+  mortgageMode = false;
+  draw();
+  updatePanels();
+  updateButtons();
+}
+
+function enterUnmortgageMode() {
+  if (sellingMode) sellingMode = false;
+  if (buildMode) buildMode = null;
+  if (mortgageMode) mortgageMode = false;
+  unmortgageMode = true;
+  log('💳 Unmortgage Mode: Click a mortgaged property to unmortgage (with 10% interest)', 'log-action');
+  draw();
+  updateButtons();
+}
+
+function exitUnmortgageMode() {
+  unmortgageMode = false;
+  log('❌ Unmortgage Mode cancelled', 'log-action');
+  draw();
+  updateButtons();
+}
+
+function unmortgageProperty(tileIndex) {
+  let t = tiles[tileIndex];
+  let p = players[current];
+  if (t.o !== current) {
+    log('⚠️ You don\'t own this property', 'log-action');
+    return;
+  }
+  if (!t.mortgaged) {
+    log('⚠️ Property is not mortgaged', 'log-action');
+    return;
+  }
+  let mortgageValue = Math.floor(t.price * 0.5);
+  let unmortgageCost = Math.floor(mortgageValue * (1 + INTEREST_RATE));
+  if (p.money < unmortgageCost) {
+    log(`⚠️ Not enough money! Need $${unmortgageCost} (includes ${(INTEREST_RATE * 100)}% interest)`, 'log-action');
+    return;
+  }
+  t.mortgaged = false;
+  p.money -= unmortgageCost;
+  log(`💳 ${p.name} unmortgaged ${t.name} for $${unmortgageCost} (${(INTEREST_RATE * 100)}% interest)`, 'log-expense');
+  beep(600);
+  if (gameMode === 'online' && isMyTurn) {
+    sendAction('unmortgage', { tileIndex: tileIndex, playerIndex: current, amount: unmortgageCost });
+  }
+  unmortgageMode = false;
+  draw();
+  updatePanels();
+  updateButtons();
+  checkBankruptcy();
+}
+
 function aiTakeTurn() {
   let p = players[current];
   let t = tiles[p.pos];
@@ -1169,6 +1331,15 @@ function openTradeMenu() {
     log('⚠️ AI players cannot initiate trades', 'log-action');
     return;
   }
+  // Reset trade state
+  selectedPartner = null;
+  tradeGiveProperties = [];
+  tradeReceiveProperties = [];
+  document.getElementById('trade-give-money').value = '0';
+  document.getElementById('trade-receive-money').value = '0';
+  document.getElementById('trade-give-properties').innerHTML = '';
+  document.getElementById('trade-receive-properties').innerHTML = '';
+  
   document.getElementById('trade-modal').style.display = 'block';
   renderTradePartners();
 }
@@ -1178,6 +1349,10 @@ function closeTradeMenu() {
   selectedPartner = null;
   tradeGiveProperties = [];
   tradeReceiveProperties = [];
+  document.getElementById('trade-give-money').value = '0';
+  document.getElementById('trade-receive-money').value = '0';
+  document.getElementById('trade-give-properties').innerHTML = '';
+  document.getElementById('trade-receive-properties').innerHTML = '';
 }
 
 function renderTradePartners() {
@@ -1203,7 +1378,12 @@ function selectTradePartner(idx) {
 }
 
 function renderTradeProperties() {
-  if (selectedPartner === null) return;
+  if (selectedPartner === null) {
+    // Show message to select a partner first
+    document.getElementById('trade-give-properties').innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">Select a trading partner above to view properties</p>';
+    document.getElementById('trade-receive-properties').innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">Select a trading partner above to view properties</p>';
+    return;
+  }
   let giveDiv = document.getElementById('trade-give-properties');
   giveDiv.innerHTML = '';
   tiles.forEach((t, i) => {
@@ -1216,6 +1396,9 @@ function renderTradeProperties() {
       giveDiv.appendChild(item);
     }
   });
+  if (giveDiv.innerHTML === '') {
+    giveDiv.innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">You have no properties to trade</p>';
+  }
   let receiveDiv = document.getElementById('trade-receive-properties');
   receiveDiv.innerHTML = '';
   tiles.forEach((t, i) => {
@@ -1228,6 +1411,9 @@ function renderTradeProperties() {
       receiveDiv.appendChild(item);
     }
   });
+  if (receiveDiv.innerHTML === '') {
+    receiveDiv.innerHTML = '<p style="color:#7f8c8d;text-align:center;padding:20px;">Partner has no properties to trade</p>';
+  }
 }
 
 function toggleGiveProperty(idx) {
@@ -1269,8 +1455,10 @@ function sendTrade() {
     giveMoney: giveMoney,
     receiveMoney: receiveMoney
   };
+  // Store partner info BEFORE closing menu (which resets selectedPartner to null)
+  let partnerIsAI = players[selectedPartner].isAI;
   closeTradeMenu();
-  if (players[selectedPartner].isAI) {
+  if (partnerIsAI) {
     setTimeout(() => evaluateAITrade(), 1000);
   } else {
     showTradeOffer();
@@ -1341,15 +1529,25 @@ function rejectTrade() {
 
 function evaluateAITrade() {
   let trade = currentTrade;
-  let giveValue = trade.giveMoney;
+  // From AI's perspective:
+  // - trade.giveMoney/giveProperties = what the HUMAN gives (AI RECEIVES)
+  // - trade.receiveMoney/receiveProperties = what the HUMAN receives (AI GIVES)
+  
+  // Calculate what AI is RECEIVING (from human)
+  let aiReceivesValue = trade.giveMoney;
   trade.giveProperties.forEach(i => {
-    giveValue += tiles[i].price;
+    aiReceivesValue += tiles[i].price;
   });
-  let receiveValue = trade.receiveMoney;
+  
+  // Calculate what AI is GIVING (to human)
+  let aiGivesValue = trade.receiveMoney;
   trade.receiveProperties.forEach(i => {
-    receiveValue += tiles[i].price;
+    aiGivesValue += tiles[i].price;
   });
-  if (receiveValue >= giveValue * 0.9) {
+  
+  // AI accepts if what it receives is worth at least 90% of what it gives
+  // (i.e., AI won't accept deals where it loses more than 10% value)
+  if (aiReceivesValue >= aiGivesValue * 0.9) {
     acceptTrade();
   } else {
     rejectTrade();
@@ -1571,6 +1769,8 @@ function _endTurnAfterAuction() {
   let inJail = players[current].jailTurns > 0;
   if (sellingMode) toggleSellMode();
   if (buildMode) exitBuildMode();
+  if (mortgageMode) exitMortgageMode();
+  if (unmortgageMode) exitUnmortgageMode();
   if (!inJail) {
     log(`✅ ${players[current].name} ended turn`, 'log-action');
   }
@@ -1639,12 +1839,30 @@ document.addEventListener('keydown', function(e) {
         enterBuildMode('villa');
       }
       break;
+    case 'm':
+      e.preventDefault();
+      let mortgageBtn = document.getElementById('mortgageBtn');
+      if (mortgageBtn && !mortgageBtn.disabled) {
+        enterMortgageMode();
+      }
+      break;
+    case 'u':
+      e.preventDefault();
+      let unmortgageBtn = document.getElementById('unmortgageBtn');
+      if (unmortgageBtn && !unmortgageBtn.disabled) {
+        enterUnmortgageMode();
+      }
+      break;
     case 'escape':
       e.preventDefault();
       if (buildMode) {
         exitBuildMode();
       } else if (sellingMode) {
         toggleSellMode();
+      } else if (mortgageMode) {
+        exitMortgageMode();
+      } else if (unmortgageMode) {
+        exitUnmortgageMode();
       }
       break;
   }
@@ -1700,6 +1918,8 @@ function updateButtons() {
   document.getElementById('sellBtn').disabled = !canPlay;
   document.getElementById('buildBtn').disabled = !canPlay;
   document.getElementById('tradeBtn').disabled = !canPlay;
+  document.getElementById('mortgageBtn').disabled = !canPlay;
+  document.getElementById('unmortgageBtn').disabled = !canPlay;
   let bailBtn = document.getElementById('bailBtn');
   if (p.jailTurns > 0 && canPlay) {
     bailBtn.style.display = 'inline-block';
@@ -1721,6 +1941,7 @@ function checkBankruptcy() {
           t.o = -1;
           t.h = 0;
           t.v = 0;
+          t.mortgaged = false;
         }
       });
       let activePlayers = players.filter(p => p.money >= 0);
