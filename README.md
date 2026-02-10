@@ -1,172 +1,154 @@
-# Monopoly - Multiplayer Edition
+# 🎲 Monopoly Classic - 8×5 Board
 
-A web-based Monopoly-style board game with multiple game modes and real-time multiplayer support.
+A fully-featured digital Monopoly game with local multiplayer, online multiplayer, and AI opponent support. Built with vanilla JavaScript and peer-to-peer networking.
 
 ## 🎮 Game Modes
 
-### 🤖 AI Mode
-Play against computer-controlled opponents with intelligent decision-making.
+- **🤖 Play vs AI** - Challenge computer opponents
+- **🌐 Online Multiplayer** - Play with friends using room codes (powered by PeerJS)
+- **👥 Local Multiplayer** - Hot-seat play with 2-4 players on the same device
 
-### 🌐 Online Multiplayer
-Play with friends remotely using room codes powered by PeerJS.
+## 📋 How to Play
 
-### 👥 Local Multiplayer
-Pass-and-play mode for 2-4 players on the same device.
+### Game Rules
 
-## 🎯 How to Play
+#### Setup
+- Each player starts with **$1500**
+- Players take turns rolling dice and moving around the board
+- The goal is to bankrupt your opponents by building a property empire
 
-### Starting a Game
+#### On Your Turn
+1. **Roll the Dice** - Move your pawn the number of spaces shown
+2. **Land on a Property**:
+   - **Unowned Property**: You can buy it for the listed price or decline (triggering an auction)
+   - **Your Own Property**: Nothing happens
+   - **Opponent's Property**: Pay rent to the owner
+3. **End Your Turn** - Pass the dice to the next player
 
-1. Open `index.html` in a web browser
-2. Choose your game mode from the main menu
-3. Select number of players (2-4)
-4. Start playing!
+#### Property Types
 
-### Game Controls
+**🏘️ Properties (Colored Tiles)**
+- Purchase price: Varies by property
+- Build houses/hotels when you own all properties of the same color
+- Rent increases with each house: Base → 2x → 4x → 8x → 16x (Hotel)
 
-#### Keyboard Shortcuts
-- **Space** - Roll dice
-- **Enter** - End turn
-- **B** - Buy property (or pay bail if in jail)
-- **S** - Toggle sell mode
-- **T** - Open trade menu
-- **H** - Build house
-- **V** - Build villa
-- **Esc** - Exit build/sell mode
+**🚂 Railroads**
+- Rent multiplies based on how many railroads you own
+- No building allowed
 
-#### Mouse Controls
-- Click tiles in build mode to construct houses/villas
-- Click properties in sell mode to sell them
-- Use on-screen buttons for all actions
+**⚡ Utilities**
+- Rent is 4x or 10x the dice roll depending on ownership
+- No building allowed
 
-### Gameplay Basics
+#### Special Tiles
 
-1. **Roll the Dice**: Move around the 5×5 board
-2. **Buy Properties**: Land on unowned tiles to purchase them
-3. **Build Houses & Villas**: Upgrade properties with the same color
-4. **Collect Rent**: Other players pay you when landing on your properties
-5. **Trading**: Negotiate property swaps with other players (local/online mode)
-6. **Avoid Jail**: Landing on the jail tile sends you to jail for 3 turns
+- **🏁 GO**: Collect $200 when you pass or land on GO
+- **🔓 Just Visiting/Jail**: Safe tile (unless you're sent to jail)
+- **🎰 Luck**: Draw a card (can be good or bad!)
+- **💰 Free Parking**: Collect tax pool money
+- **👮 Go to Jail**: Go directly to jail, do not collect $200
+- **💸 Tax**: Pay $100 or $200 depending on the tax tile
 
-### Property Groups
-Properties are colored by row:
-- **Brown** (Row 0) - Cheapest properties
-- **Light Blue** (Row 1)
-- **Pink** (Row 2)
-- **Orange** (Row 3)
-- **Red** (Row 4) - Most expensive properties
+#### Jail Rules
+- Get out by:
+  - Paying $50 bail
+  - Rolling doubles
+  - Waiting 3 turns (forced out on turn 3)
 
-### Building Rules
-- Must own all properties of the same color to build
-- Houses must be built evenly across the color group
-- Villas can only be built after all properties have houses
-- Maximum: 1 house + 1 villa per property
+#### Building
+- **Houses**: Cost varies by property color
+- Must own all properties in a color group to build
+- Must build evenly (no property can have 2+ more houses than others in the group)
+- **Hotels**: After placing 4 houses, you can upgrade to a hotel (costs another house payment)
+- **Sell Buildings**: You can demolish buildings for 50% of the build cost
 
-### Special Tiles
-- **🍀 Luck Tiles**: Draw a random event card (bonus or penalty)
-- **🚔 Jail**: Costs $50 to bail out, or wait 3 turns
+#### Trading
+- Propose trades with other players
+- Trade properties and/or cash
+- Both players must agree to the trade
 
-## 🔧 Trading System
+#### Auctions
+- If you decline to buy a property, it goes to auction
+- All players (including you) can bid
+- Highest bidder wins
+- Minimum bid starts at $10
 
-### How to Trade (Local/Online Mode)
+#### Bankruptcy
+- If your money goes negative, you're bankrupt
+- All your properties return to the bank (unowned)
+- Last player standing wins!
 
-1. Press **T** or click the "Trade" button during your turn
-2. Select which player to trade with
-3. Choose what you're offering:
-   - Cash amount
-   - Properties you own
-4. Choose what you want:
-   - Cash from them
-   - Their properties
-5. Propose the trade
-6. The other player accepts or rejects
+## 🎯 Property Information on Tiles
 
-### Trading Rules
-- Only available in **local** and **online** multiplayer (not AI mode)
-- Can only trade with human players
-- Both players must have the resources they're offering
-- Properties retain their houses/villas when traded
+Each tile displays:
+- **💵 Price**: Purchase cost
+- **🏠 House Cost**: Cost to build one house (properties only)
+- **📊 Base Rent**: Rent with no buildings
+- **💰 Current Rent**: Actual rent with buildings (shown in red when houses/hotels are built)
+
+## ⌨️ Keyboard Shortcuts
+
+- **Space**: Roll Dice
+- **Enter**: End Turn
+- **B**: Buy Property / Pay Bail
+- **S**: Toggle Sell Mode
+- **T**: Open Trade Menu
+- **H**: Build House
+- **V**: Build Hotel
+- **Esc**: Exit Build/Sell Mode
 
 ## 🌐 Online Multiplayer Setup
 
-### Creating a Game
-1. Select "Online Multiplayer"
-2. Click "Create Room"
-3. Share your room code with friends
+### Host a Game
+1. Click "Play Online"
+2. Click "Host Game"
+3. Share the **room code** with your friends
 4. Wait for players to join
-5. Start the game when everyone is connected
+5. Click "Start Game" when ready
 
-### Joining a Game
-1. Select "Online Multiplayer"
-2. Click "Join Room"
-3. Enter the room code from your friend
-4. Wait for the host to start
+### Join a Game
+1. Click "Play Online"
+2. Click "Join Game"
+3. Enter the **room code** provided by the host
+4. Wait for the host to start the game
 
-### Connection Tips
-- Ensure stable internet connection
-- Room codes are case-insensitive
-- If connection fails, try refreshing and creating a new room
-- All players must stay connected throughout the game
+> **Note**: Online play uses peer-to-peer connections (PeerJS). Make sure both players have stable internet connections.
 
-## 💡 Strategy Tips
+## 🛠️ Technical Features
 
-1. **Early Game**: Focus on completing color sets
-2. **Build Strategically**: Houses on high-traffic areas earn more rent
-3. **Cash Management**: Keep enough money for rent and bail
-4. **Trading**: Use trades to complete color sets faster
-5. **Jail Strategy**: Late game, staying in jail can avoid high rents
+- Fully responsive design (works on mobile, tablet, desktop)
+- Smooth animations and sound effects
+- Real-time game state synchronization for online play
+- Persistent game log showing all actions
+- Color-coded player cards and pieces
+- Visual indicators for buildable/sellable properties
+- Auction system with live bidding
 
-## 🐛 Known Issues & Fixes
+## 🎨 Board Layout
 
-### Trading is Disabled
-If the trade button doesn't work, check that:
-- You're in **local** or **online** mode (not AI mode)
-- There are other human players in the game
-- It's currently your turn
+The game uses an 8×5 grid (40 tiles total) with:
+- 8 property color groups
+- 4 railroads
+- 2 utilities
+- 4 luck tiles
+- Special tiles (GO, Jail, Free Parking, Go to Jail, Taxes)
 
-**Fix**: To enable trading in all modes, edit line 2170:
-```javascript
-// Change this:
-if (gameMode !== 'local') {
+## 🚀 Getting Started
 
-// To this:
-if (gameMode === 'ai') {
-```
+Simply open `index.html` in any modern web browser. No installation or server required!
 
-### Online Connection Issues
-- Refresh the page and try a new room code
-- Check your firewall settings
-- Ensure all players are using the same game version
+## 📱 Mobile Support
 
-## 📋 Requirements
+The game is fully playable on mobile devices with touch controls and responsive layout adjustments.
 
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- Internet connection (for online multiplayer only)
-- No installation required - just open the HTML file!
+## 🎭 Credits
 
-## 🎨 Features
-
-- ✅ Three game modes (AI, Online, Local)
-- ✅ 2-4 players
-- ✅ Property trading system
-- ✅ House and villa building
-- ✅ Luck cards with random events
-- ✅ Jail mechanics
-- ✅ Full keyboard shortcuts
-- ✅ Mobile-responsive design
-- ✅ Real-time multiplayer via PeerJS
-- ✅ Colorful, modern UI
-
-## 🎲 Winning the Game
-
-The game ends when only one player remains solvent. The last player standing wins!
-
-Bankruptcy occurs when you cannot pay rent, fees, or other obligations and have no properties to sell.
-
-## 📝 Credits
-
-Built with vanilla JavaScript, PeerJS for multiplayer connectivity, and CSS Grid for the board layout.
+Built with:
+- Vanilla JavaScript
+- PeerJS for peer-to-peer networking
+- CSS Grid for board layout
+- Web Audio API for sound effects
 
 ---
 
-**Enjoy the game! 🎉**
+**Enjoy the game! May the dice be ever in your favor! 🎲**
