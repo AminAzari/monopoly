@@ -1,6 +1,6 @@
-# Mini Monopoly 5×5 - Multiplayer Edition
+# Monopoly - Multiplayer Edition
 
-A compact, web-based Monopoly-style board game with multiple game modes and real-time multiplayer support.
+A web-based Monopoly-style board game with multiple game modes and real-time multiplayer support.
 
 ## 🎮 Game Modes
 
@@ -17,7 +17,7 @@ Pass-and-play mode for 2-4 players on the same device.
 
 ### Starting a Game
 
-1. Open `index1.html` in a web browser
+1. Open `index.html` in a web browser
 2. Choose your game mode from the main menu
 3. Select number of players (2-4)
 4. Start playing!
