@@ -55,7 +55,8 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 .status-error { background: #f8d7da; color: #721c24; }
 
 #game-screen { display: none; }
-#wrap { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+#wrap { display: flex; justify-content: center; align-items: flex-start; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+#left-panel { display: flex; flex-direction: column; gap: 15px; }
 
 @media (max-width: 768px) {
   #board { width: 90vw !important; height: 90vw !important; max-width: 540px; max-height: 540px; }
@@ -349,18 +350,20 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
   <h2>Monopoly Classic</h2>
   <div id="status"></div>
   <div id="wrap">
-    <div id="panel"></div>
+    <div id="left-panel">
+      <div id="panel"></div>
+      <div class="controls">
+        <button id="rollBtn" onclick="roll()">🎲 Roll Dice (Space)</button>
+        <button id="buyBtn" onclick="buy()" disabled>💰 Buy Property (B)</button>
+        <button id="endBtn" onclick="end()" disabled>✅ End Turn (Enter)</button>
+        <button id="sellBtn" onclick="toggleSellMode()">🏷️ Sell Mode (S)</button>
+        <button id="buildBtn" onclick="enterBuildMode('house')">🏠 Build (H/V)</button>
+        <button id="bailBtn" onclick="payBail()" style="display:none;">💸 Pay Bail $50 (B)</button>
+        <button id="tradeBtn" onclick="openTradeMenu()">🤝 Trade (T)</button>
+      </div>
+    </div>
     <div id="board"></div>
     <div id="log"></div>
-  </div>
-  <div class="controls">
-    <button id="rollBtn" onclick="roll()">🎲 Roll Dice (Space)</button>
-    <button id="buyBtn" onclick="buy()" disabled>💰 Buy Property (B)</button>
-    <button id="endBtn" onclick="end()" disabled>✅ End Turn (Enter)</button>
-    <button id="sellBtn" onclick="toggleSellMode()">🏷️ Sell Mode (S)</button>
-    <button id="buildBtn" onclick="enterBuildMode('house')">🏠 Build (H/V)</button>
-    <button id="bailBtn" onclick="payBail()" style="display:none;">💸 Pay Bail $50 (B)</button>
-    <button id="tradeBtn" onclick="openTradeMenu()">🤝 Trade (T)</button>
   </div>
 </div>
 
@@ -711,10 +714,39 @@ function draw() {
       div.appendChild(hdr);
     }
     if (t.type === 'property' || t.type === 'railroad' || t.type === 'utility') {
-      let priceDiv = document.createElement('div');
-      priceDiv.style.fontSize = '9px';
-      priceDiv.textContent = '$' + t.price;
-      div.appendChild(priceDiv);
+      let infoDiv = document.createElement('div');
+      infoDiv.style.fontSize = '8px';
+      infoDiv.style.marginTop = '2px';
+      infoDiv.style.lineHeight = '1.3';
+      
+      // Price
+      let priceText = document.createElement('div');
+      priceText.style.fontWeight = 'bold';
+      priceText.textContent = '💵 $' + t.price;
+      infoDiv.appendChild(priceText);
+      
+      // House cost and rents (only for properties)
+      if (t.type === 'property') {
+        let houseText = document.createElement('div');
+        houseText.textContent = '🏠 $' + t.houseCost;
+        infoDiv.appendChild(houseText);
+        
+        let rentText = document.createElement('div');
+        rentText.textContent = '📊 $' + t.baseRent;
+        infoDiv.appendChild(rentText);
+        
+        // Show scaled rent if property has buildings
+        if (t.h > 0 || t.v > 0) {
+          let currentRent = t.v > 0 ? t.baseRent * 16 : t.baseRent * Math.pow(2, t.h);
+          let scaledText = document.createElement('div');
+          scaledText.style.color = '#d32f2f';
+          scaledText.style.fontWeight = 'bold';
+          scaledText.textContent = '💰 $' + currentRent;
+          infoDiv.appendChild(scaledText);
+        }
+      }
+      
+      div.appendChild(infoDiv);
     }
     if (t.o >= 0) {
       let ownerDiv = document.createElement('div');
@@ -931,11 +963,7 @@ function buy() {
     log('⚠️ Not enough money!', 'log-expense');
     return;
   }
-  if (!p.isAI && !confirm(`Buy ${t.name} for $${t.price}?`)) {
-    log(`🔨 ${p.name} declined to buy — Starting auction!`, 'log-action');
-    startAuction(p.pos);
-    return;
-  }
+ 
   buyProperty();
 }
 
