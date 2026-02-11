@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Monopoly Classic - 8×5 Board</title>
+<title>Monopoly Classic</title>
 <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
 <style>
 * { box-sizing: border-box; }
@@ -55,27 +55,102 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 .status-error { background: #f8d7da; color: #721c24; }
 
 #game-screen { display: none; }
-#wrap { display: flex; justify-content: center; align-items: flex-start; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-#left-panel { display: flex; flex-direction: column; gap: 15px; }
+#wrap { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 20px; }
 
-@media (max-width: 768px) {
-  #board { width: 90vw !important; height: 90vw !important; max-width: 540px; max-height: 540px; }
-  .controls { width: 90% !important; max-width: 540px; }
-  .controls button { font-size: 12px !important; padding: 8px 12px !important; }
+@media (max-width: 1300px) {
+  #board { width: 98vw !important; height: calc(98vw * 0.73) !important; max-width: 1243px; max-height: 907px;
+    grid-template-columns: repeat(11, calc((98vw - 26px) / 11)) !important;
+    grid-template-rows: repeat(11, calc(((98vw - 26px) / 11) * 0.67)) !important;
+  }
+  .controls { width: 90% !important; max-width: 1243px; }
+  .controls button { font-size: 10px !important; padding: 5px 8px !important; }
 }
 
 #board {
-  display: grid; gap: 6px; background: #2c3e50; padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(11, 110px);
+  grid-template-rows: repeat(11, 73px);
+  gap: 3px;
+  background: #2c3e50; padding: 10px;
   border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+  width: 1243px;
+  height: 836px;
 }
 
 .tile {
-  border: 2px solid #34495e; background: white; font-size: 10px;
-  position: relative; padding: 6px 4px; border-radius: 6px;
+  border: 2px solid #34495e; background: white; font-size: 8px;
+  position: relative; padding: 2px; border-radius: 5px;
   transition: transform 0.2s, box-shadow 0.2s; overflow: hidden;
+  display: flex; flex-direction: column;
 }
 .tile:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-.tile-header { font-weight: bold; margin-bottom: 3px; padding: 2px; border-radius: 3px; font-size: 11px; }
+.tile-header {
+  font-weight: bold; text-align: center; padding: 1px 1px; border-radius: 3px;
+  font-size: 10px; line-height: 1.1; margin-bottom: 1px; flex-shrink: 0;
+}
+.tile-num {
+  font-size: 13px; font-weight: 900; text-align: center; line-height: 1;
+}
+.tile-price {
+  font-size: 7px; font-weight: bold; text-align: center; color: #333; margin-bottom: 1px;
+}
+.rent-table {
+  width: 100%; border-collapse: collapse; font-size: 6px; line-height: 1.1;
+}
+.rent-table td {
+  padding: 0px 2px; white-space: nowrap;
+}
+.rent-table td.rlabel { color: #777; width: 30%; }
+.rent-table td.rval  { font-weight: bold; color: #222; width: 20%; text-align: right; padding-right: 4px; }
+.rent-table td.active-rent { color: #d32f2f !important; background: rgba(211,47,47,0.10); font-weight: bold; }
+.tile-bottom {
+  margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end;
+  padding-top: 2px;
+}
+.owner-dot {
+  width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #333;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 6px; font-weight: bold; color: white; flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+.pawns-area {
+  display: flex; flex-wrap: wrap; gap: 1px; justify-content: flex-end;
+}
+.pawn {
+  display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid #333; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  animation: pawnAppear 0.3s ease; flex-shrink: 0;
+}
+@keyframes pawnAppear { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.house {
+  width: 10px; height: 10px; background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
+  display: inline-block; margin: 1px; border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3); animation: buildingAppear 0.3s ease;
+}
+.villa {
+  width: 14px; height: 10px; background: linear-gradient(135deg, #e53935 0%, #ef5350 100%);
+  display: inline-block; margin: 1px; border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4); animation: buildingAppear 0.3s ease;
+}
+@keyframes buildingAppear { from { transform: scale(0) rotate(0deg); } to { transform: scale(1) rotate(360deg); } }
+
+.controls {
+  background: rgba(255,255,255,0.95); padding: 12px 10px; border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15); width: 100%; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.control-row {
+  display: flex; gap: 6px; justify-content: space-between;
+}
+.control-row button {
+  padding: 10px 12px; margin: 0; font-size: 11px; font-weight: bold;
+  border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2); flex: 1;
+}
+.control-row button:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+.control-row button:not(:disabled):active { transform: translateY(0); }
+.control-row button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .row-0 { background: #8d6e63; color: white; }
 .row-1 { background: #81d4fa; color: #333; }
@@ -90,105 +165,116 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 .jail-tile { background: linear-gradient(135deg, #607d8b 0%, #90a4ae 100%) !important; }
 .rail-tile { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important; color: white !important; }
 .rail-tile .tile-header { background: #e94560 !important; color: white !important; }
-
 .utility-tile { background: linear-gradient(135deg, #26c6da 0%, #00acc1 100%) !important; color: white !important; }
 .utility-tile .tile-header { background: #00838f !important; color: white !important; }
-
 .go-tile { background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%) !important; }
 .gotojail-tile { background: linear-gradient(135deg, #ffebee 0%, #ef9a9a 100%) !important; }
 .freeparking-tile { background: linear-gradient(135deg, #f3e5f5 0%, #ce93d8 100%) !important; }
 .tax-tile { background: linear-gradient(135deg, #fff3e0 0%, #ffcc80 100%) !important; }
 
-.tile.sellable { cursor: pointer; box-shadow: 0 0 10px rgba(76, 175, 80, 0.8) !important; border: 3px solid #4CAF50 !important; }
-.tile.sellable:hover { transform: translateY(-4px) !important; box-shadow: 0 6px 12px rgba(76, 175, 80, 0.9) !important; }
-.tile.buildable { cursor: pointer; box-shadow: 0 0 10px rgba(255, 152, 0, 0.8) !important; border: 3px solid #FF9800 !important; }
-.tile.buildable:hover { transform: translateY(-4px) !important; box-shadow: 0 6px 12px rgba(255, 152, 0, 0.9) !important; }
-
-.tile.mortgageable { cursor: pointer; box-shadow: 0 0 10px rgba(255, 193, 7, 0.8) !important; border: 3px solid #FFC107 !important; }
-.tile.mortgageable:hover { transform: translateY(-4px) !important; box-shadow: 0 6px 12px rgba(255, 193, 7, 0.9) !important; }
-.tile.unmortgageable { cursor: pointer; box-shadow: 0 0 10px rgba(63, 81, 181, 0.8) !important; border: 3px solid #3F51B5 !important; }
-.tile.unmortgageable:hover { transform: translateY(-4px) !important; box-shadow: 0 6px 12px rgba(63, 81, 181, 0.9) !important; }
-
-.tile.mortgaged {
-  opacity: 0.6;
-  position: relative;
-}
+.tile.sellable { cursor: pointer; box-shadow: 0 0 10px rgba(76,175,80,0.8) !important; border: 3px solid #4CAF50 !important; }
+.tile.sellable:hover { transform: translateY(-4px) !important; }
+.tile.buildable { cursor: pointer; box-shadow: 0 0 10px rgba(255,152,0,0.8) !important; border: 3px solid #FF9800 !important; }
+.tile.mortgageable { cursor: pointer; box-shadow: 0 0 10px rgba(255,193,7,0.8) !important; border: 3px solid #FFC107 !important; }
+.tile.unmortgageable { cursor: pointer; box-shadow: 0 0 10px rgba(63,81,181,0.8) !important; border: 3px solid #3F51B5 !important; }
+.tile.mortgaged { opacity: 0.6; }
 .tile.mortgaged::after {
-  content: '🏦 MORTGAGED';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) rotate(-15deg);
-  background: rgba(255, 0, 0, 0.9);
-  color: white;
-  padding: 3px 5px;
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 7px;
-  white-space: nowrap;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  content: 'MORTGAGED'; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%) rotate(-15deg);
+  background: rgba(255,0,0,0.85); color: white; padding: 2px 4px;
+  border-radius: 3px; font-weight: bold; font-size: 7px; white-space: nowrap;
 }
-
-.pawn {
-  display: inline-block; width: 16px; height: 16px; border-radius: 50%;
-  margin: 2px; border: 2px solid #333; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  animation: pawnAppear 0.3s ease;
-}
-@keyframes pawnAppear { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-.house {
-  width: 14px; height: 14px; background: linear-gradient(135deg, #43a047 0%, #66bb6a 100%);
-  display: inline-block; margin: 1px; border-radius: 3px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3); animation: buildingAppear 0.3s ease;
-}
-.villa {
-  width: 20px; height: 16px; background: linear-gradient(135deg, #e53935 0%, #ef5350 100%);
-  display: inline-block; margin: 1px; border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4); animation: buildingAppear 0.3s ease;
-}
-@keyframes buildingAppear { from { transform: scale(0) rotate(0deg); } to { transform: scale(1) rotate(360deg); } }
-
-.controls {
-  background: white; padding: 20px; border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2); width: 540px; max-width: 90%;
-}
-.controls button {
-  padding: 12px 20px; margin: 5px; font-size: 14px; font-weight: bold;
-  border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-.controls button:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-.controls button:not(:disabled):active { transform: translateY(0); }
-.controls button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 #rollBtn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
 #buyBtn { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; }
 #endBtn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
 #sellBtn { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
 #buildBtn { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; }
+#villaBtn { background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%); color: white; }
 #bailBtn { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333; }
 #tradeBtn { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
 #mortgageBtn { background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%); color: white; }
 #unmortgageBtn { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
 
-#panel {
-  background: white; padding: 15px; border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: left;
-  max-width: 300px; width: 100%;
+#board-center {
+  grid-column: 2 / 11;
+  grid-row: 2 / 11;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  padding: 14px;
+  overflow: hidden;
+  background: rgba(144, 238, 144, 0.12);
+  border-radius: 6px;
 }
+
+#left-panel {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+#right-panel {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+#panel {
+  background: rgba(255,255,255,0.95); padding: 8px 10px; border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15); text-align: left; width: 100%; flex-shrink: 0;
+}
+#panel h3 { margin: 0 0 5px 0; font-size: 13px; color: #2c3e50; }
 
 .player-card {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding: 12px; margin: 8px 0; border-radius: 8px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; margin: 3px 0; border-radius: 6px;
   border-left: 4px solid; transition: transform 0.2s;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  font-size: 12px;
 }
-.player-card.active { transform: translateX(5px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+.player-card.active { transform: translateX(4px); box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+.player-card .pc-name { font-weight: bold; min-width: 50px; }
+.player-card .pc-money { color: #2e7d32; font-weight: bold; }
+.player-card .pc-props { color: #666; font-size: 11px; }
+.player-card .pc-jail { color: #e74c3c; font-size: 11px; font-weight: bold; }
 
 #log {
-  background: white; padding: 15px; border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: left;
-  max-width: 400px; width: 100%; height: 300px; overflow-y: auto; font-size: 13px;
+  background: rgba(255,255,255,0.95); padding: 10px; border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15); text-align: left;
+  width: 100%; flex: 1; overflow-y: auto; font-size: 12px; min-height: 120px;
 }
+
+#tile-display {
+  background: rgba(255,255,255,0.95); padding: 10px; border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15); text-align: left;
+  width: 100%; min-height: 150px; max-height: 200px; overflow-y: auto; font-size: 11px;
+}
+#tile-display h3 { margin: 0 0 8px 0; font-size: 13px; color: #2c3e50; }
+#tile-display .tile-info { line-height: 1.4; }
+#tile-display .tile-info strong { color: #2c3e50; }
+
+#game-controls {
+  background: rgba(255,255,255,0.95); padding: 10px; border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15); width: 100%; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+#game-controls button {
+  padding: 10px; font-size: 12px; font-weight: bold;
+  border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+#game-controls button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+#game-controls button:active { transform: translateY(0); }
+
+#saveBtn { background: linear-gradient(135deg, #20bf6b 0%, #26de81 100%); color: white; }
+#loadBtn { background: linear-gradient(135deg, #4b7bec 0%, #3867d6 100%); color: white; }
+#endGameBtn { background: linear-gradient(135deg, #fc5c65 0%, #eb3b5a 100%); color: white; }
+#backMenuBtn { background: linear-gradient(135deg, #a55eea 0%, #8854d0 100%); color: white; }
 
 .log-entry { padding: 6px; margin: 3px 0; border-radius: 4px; }
 .log-expense { background: #ffebee; color: #c62828; }
@@ -341,6 +427,10 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
     👥 Local Multiplayer
     <div class="subtitle">Pass and play on one device</div>
   </button>
+  <button class="menu-button" onclick="loadGame()" style="background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%); margin-top: 30px;">
+    📂 Load Saved Game
+    <div class="subtitle">Continue from where you left off</div>
+  </button>
 </div>
 
 <div id="player-count-screen">
@@ -377,22 +467,44 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
   <h2>Monopoly Classic</h2>
   <div id="status"></div>
   <div id="wrap">
-    <div id="left-panel">
-      <div id="panel"></div>
-      <div class="controls">
-        <button id="rollBtn" onclick="roll()">🎲 Roll Dice (Space)</button>
-        <button id="buyBtn" onclick="buy()" disabled>💰 Buy Property (B)</button>
-        <button id="endBtn" onclick="end()" disabled>✅ End Turn (Enter)</button>
-        <button id="sellBtn" onclick="toggleSellMode()">🏷️ Sell Mode (S)</button>
-        <button id="buildBtn" onclick="enterBuildMode('house')">🏠 Build (H/V)</button>
-        <button id="bailBtn" onclick="payBail()" style="display:none;">💸 Pay Bail $50 (B)</button>
-        <button id="tradeBtn" onclick="openTradeMenu()">🤝 Trade (T)</button>
-        <button id="mortgageBtn" onclick="enterMortgageMode()">🏦 Mortgage (M)</button>
-        <button id="unmortgageBtn" onclick="enterUnmortgageMode()">💳 Unmortgage (U)</button>
+    <div id="board">
+      <div id="board-center">
+        <div id="left-panel">
+          <div id="panel"></div>
+          <div class="controls">
+            <div class="control-row">
+              <button id="rollBtn" onclick="roll()">🎲 Roll (Space)</button>
+              <button id="buyBtn" onclick="buy()" disabled>💰 Buy (B)</button>
+              <button id="endBtn" onclick="end()" disabled>✅ End (Enter)</button>
+            </div>
+            <div class="control-row">
+              <button id="sellBtn" onclick="toggleSellMode()">🏷️ Sell (S)</button>
+              <button id="buildBtn" onclick="enterBuildMode('house')">🏠 House (H)</button>
+              <button id="villaBtn" onclick="enterBuildMode('villa')">🏨 Hotel (V)</button>
+            </div>
+            <div class="control-row">
+              <button id="tradeBtn" onclick="openTradeMenu()">🤝 Trade (T)</button>
+              <button id="mortgageBtn" onclick="enterMortgageMode()">🏦 Mortgage (M)</button>
+              <button id="unmortgageBtn" onclick="enterUnmortgageMode()">💳 Unmtg (U)</button>
+            </div>
+            <button id="bailBtn" onclick="payBail()" style="display:none;">💸 Pay Bail $50 (B)</button>
+          </div>
+          <div id="log"></div>
+        </div>
+        <div id="right-panel">
+          <div id="tile-display">
+            <h3>📍 Tile Information</h3>
+            <div id="tile-info-content">Click on a tile to see details...</div>
+          </div>
+          <div id="game-controls">
+            <button id="saveBtn" onclick="saveGame()">💾 Save Game</button>
+            <button id="loadBtn" onclick="loadGame()">📂 Load Game</button>
+            <button id="endGameBtn" onclick="endGame()">🏆 End & Declare Winner</button>
+            <button id="backMenuBtn" onclick="backToMenu()">🔙 Back to Menu</button>
+          </div>
+        </div>
       </div>
     </div>
-    <div id="board"></div>
-    <div id="log"></div>
   </div>
 </div>
 
@@ -449,7 +561,7 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
       <div class="auction-current-bid" id="auction-current-bid">Current Bid: $X</div>
     </div>
     <div class="auction-body">
-      <div class="auction-timer"><div id="auction-timer-bar"></div></div>
+      <div class="auction-timer" style="display:none;"><div id="auction-timer-bar"></div></div>
       <div id="auction-players-grid" class="auction-players-grid"></div>
       <div class="auction-log">
         <div class="auction-log-title">📜 Auction History</div>
@@ -699,6 +811,18 @@ function handleRemoteAction(message) {
       break;
     case 'sell':
       tiles[data.tileIndex].o = -1;
+      tiles[data.tileIndex].mortgaged = false;
+      players[data.playerIndex].money += data.amount;
+      draw();
+      updatePanels();
+      break;
+    case 'sell-building':
+      if (data.buildingType === 'villa') {
+        tiles[data.tileIndex].v--;
+        tiles[data.tileIndex].h = 4;
+      } else {
+        tiles[data.tileIndex].h--;
+      }
       players[data.playerIndex].money += data.amount;
       draw();
       updatePanels();
@@ -708,6 +832,7 @@ function handleRemoteAction(message) {
         tiles[data.tileIndex].h++;
       } else {
         tiles[data.tileIndex].v++;
+        tiles[data.tileIndex].h = 0;
       }
       players[data.playerIndex].money -= data.cost;
       draw();
@@ -728,13 +853,37 @@ function handleRemoteAction(message) {
   }
 }
 
+// Map tile index (0-39) to [col, row] on an 11x11 grid (0-indexed internally, displayed 1-indexed)
+// Classic Monopoly: 11 tiles per side, 4 corners shared = 40 tiles total
+// Tile 0 (GO)          = bottom-right corner  (col 10, row 10)
+// Tiles 1-9            = bottom row, right→left (col 9..1, row 10)
+// Tile 10 (Jail)       = bottom-left corner   (col 0, row 10)
+// Tiles 11-19          = left col, bottom→top  (col 0, row 9..1)
+// Tile 20 (FreeParking)= top-left corner       (col 0, row 0)
+// Tiles 21-29          = top row, left→right   (col 1..9, row 0)
+// Tile 30 (GoToJail)   = top-right corner      (col 10, row 0)
+// Tiles 31-39          = right col, top→bottom (col 10, row 1..9)
+function tileGridPos(i) {
+  if (i === 0)  return [10, 10]; // GO
+  if (i <= 9)   return [10 - i, 10]; // bottom row right→left
+  if (i === 10) return [0, 10]; // Jail
+  if (i <= 19)  return [0, 10 - (i - 10)]; // left col bottom→top
+  if (i === 20) return [0, 0]; // Free Parking
+  if (i <= 29)  return [i - 20, 0]; // top row left→right
+  if (i === 30) return [10, 0]; // Go to Jail
+  return [10, i - 30]; // right col top→bottom
+}
+
 function draw() {
   let board = document.getElementById('board');
-  board.style.gridTemplateColumns = 'repeat(5, 100px)';
-  board.style.gridTemplateRows = 'repeat(8, 100px)';
-  board.style.width = '540px';
-  board.style.height = '860px';
-  board.innerHTML = '';
+  board.style.gridTemplateColumns = '';
+  board.style.gridTemplateRows = '';
+  board.style.width = '';
+  board.style.height = '';
+  // Remove only tile divs, preserve #board-center
+  Array.from(board.children).forEach(child => {
+    if (child.id !== 'board-center') child.remove();
+  });
   for (let i = 0; i < tiles.length; i++) {
     let t = tiles[i];
     let div = document.createElement('div');
@@ -752,7 +901,7 @@ function draw() {
     if (t.type === 'property' && t.row !== undefined) {
       let hdr = document.createElement('div');
       hdr.className = 'tile-header row-' + t.row;
-      hdr.textContent = t.name;
+      hdr.innerHTML = '<span class="tile-num">' + i + '</span>';
       div.appendChild(hdr);
     } else {
       let hdr = document.createElement('div');
@@ -760,95 +909,194 @@ function draw() {
       hdr.textContent = t.name;
       div.appendChild(hdr);
     }
+
     if (t.type === 'property' || t.type === 'railroad' || t.type === 'utility') {
-      let infoDiv = document.createElement('div');
-      infoDiv.style.fontSize = '8px';
-      infoDiv.style.marginTop = '2px';
-      infoDiv.style.lineHeight = '1.3';
-      
       // Price
-      let priceText = document.createElement('div');
-      priceText.style.fontWeight = 'bold';
-      priceText.textContent = '💵 $' + t.price;
-      infoDiv.appendChild(priceText);
-      
-      // House cost and rents (only for properties)
-      if (t.type === 'property') {
-        let houseText = document.createElement('div');
-        houseText.textContent = '🏠 $' + t.houseCost;
-        infoDiv.appendChild(houseText);
-        
-        let rentText = document.createElement('div');
-        rentText.textContent = '📊 $' + t.baseRent;
-        infoDiv.appendChild(rentText);
-        
-        // Show scaled rent if property has buildings
-        if (t.h > 0 || t.v > 0) {
-          let currentRent = t.v > 0 ? t.baseRent * 16 : t.baseRent * Math.pow(2, t.h);
-          let scaledText = document.createElement('div');
-          scaledText.style.color = '#d32f2f';
-          scaledText.style.fontWeight = 'bold';
-          scaledText.textContent = '💰 $' + currentRent;
-          infoDiv.appendChild(scaledText);
+      let priceDiv = document.createElement('div');
+      priceDiv.className = 'tile-price';
+      priceDiv.textContent = '$' + t.price;
+      div.appendChild(priceDiv);
+
+      // Compact rent table for properties: 4 rows × 4 cols (label+value pairs)
+      if (t.type === 'property' && t.rent) {
+        let activeLevel = t.v > 0 ? 5 : t.h > 0 ? t.h : 0;
+        let table = document.createElement('table');
+        table.className = 'rent-table';
+        const entries = [
+          { label: 'B',  idx: 0 },
+          { label: '1H', idx: 1 },
+          { label: '2H', idx: 2 },
+          { label: '3H', idx: 3 },
+          { label: '4H', idx: 4 },
+          { label: '🏨', idx: 5 },
+        ];
+        // Build 3 rows of 2 entries each (4 columns total: label+value, label+value)
+        for (let row = 0; row < 3; row++) {
+          let tr = document.createElement('tr');
+          for (let col = 0; col < 2; col++) {
+            let entryIdx = row * 2 + col;
+            if (entryIdx < entries.length) {
+              let entry = entries[entryIdx];
+              let tdL = document.createElement('td');
+              tdL.className = 'rlabel' + (entry.idx === activeLevel ? ' active-rent' : '');
+              tdL.textContent = entry.label;
+              let tdV = document.createElement('td');
+              tdV.className = 'rval' + (entry.idx === activeLevel ? ' active-rent' : '');
+              tdV.textContent = '$' + t.rent[entry.idx];
+              tr.appendChild(tdL);
+              tr.appendChild(tdV);
+            }
+          }
+          table.appendChild(tr);
         }
+        div.appendChild(table);
       }
       
-      div.appendChild(infoDiv);
+      // Display rent info for railroads and utilities in table format
+      if (t.type === 'railroad') {
+        let table = document.createElement('table');
+        table.className = 'rent-table';
+        table.style.cssText = 'margin-top:2px;';
+        const railCount = tiles.filter(tile => tile.type === 'railroad' && tile.o === t.o).length;
+        
+        let tr1 = document.createElement('tr');
+        ['1RR', '2RR'].forEach((label, idx) => {
+          let tdL = document.createElement('td');
+          tdL.className = 'rlabel' + (railCount === idx + 1 ? ' active-rent' : '');
+          tdL.style.color = '#FFD700';
+          tdL.textContent = label;
+          let tdV = document.createElement('td');
+          tdV.className = 'rval' + (railCount === idx + 1 ? ' active-rent' : '');
+          tdV.style.color = '#FFD700';
+          tdV.style.fontSize = '7px';
+          tdV.textContent = '$' + [25, 50][idx];
+          tr1.appendChild(tdL);
+          tr1.appendChild(tdV);
+        });
+        table.appendChild(tr1);
+        
+        let tr2 = document.createElement('tr');
+        ['3RR', '4RR'].forEach((label, idx) => {
+          let tdL = document.createElement('td');
+          tdL.className = 'rlabel' + (railCount === idx + 3 ? ' active-rent' : '');
+          tdL.style.color = '#FFD700';
+          tdL.textContent = label;
+          let tdV = document.createElement('td');
+          tdV.className = 'rval' + (railCount === idx + 3 ? ' active-rent' : '');
+          tdV.style.color = '#FFD700';
+          tdV.style.fontSize = '7px';
+          tdV.textContent = '$' + [100, 200][idx];
+          tr2.appendChild(tdL);
+          tr2.appendChild(tdV);
+        });
+        table.appendChild(tr2);
+        div.appendChild(table);
+      }
+      
+      if (t.type === 'utility') {
+        let table = document.createElement('table');
+        table.className = 'rent-table';
+        table.style.cssText = 'margin-top:2px;';
+        const utilCount = tiles.filter(tile => tile.type === 'utility' && tile.o === t.o).length;
+        
+        let tr = document.createElement('tr');
+        ['1Util', '2Util'].forEach((label, idx) => {
+          let tdL = document.createElement('td');
+          tdL.className = 'rlabel' + (utilCount === idx + 1 ? ' active-rent' : '');
+          tdL.style.color = '#00FFFF';
+          tdL.textContent = label;
+          let tdV = document.createElement('td');
+          tdV.className = 'rval' + (utilCount === idx + 1 ? ' active-rent' : '');
+          tdV.style.color = '#00FFFF';
+          tdV.style.fontSize = '7px';
+          tdV.textContent = [4, 10][idx] + '×🎲';
+          tr.appendChild(tdL);
+          tr.appendChild(tdV);
+        });
+        table.appendChild(tr);
+        div.appendChild(table);
+      }
     }
-    if (t.o >= 0) {
-      let ownerDiv = document.createElement('div');
-      ownerDiv.style.fontSize = '8px';
-      ownerDiv.style.color = players[t.o].color;
-      ownerDiv.style.fontWeight = 'bold';
-      ownerDiv.textContent = '👤 ' + players[t.o].name;
-      div.appendChild(ownerDiv);
-    }
+
+    // Buildings
     if (t.h > 0 || t.v > 0) {
       let buildDiv = document.createElement('div');
-      buildDiv.style.marginTop = '3px';
+      buildDiv.style.display = 'flex'; buildDiv.style.flexWrap = 'wrap'; buildDiv.style.gap = '1px';
       for (let j = 0; j < t.h; j++) {
         let house = document.createElement('div');
-        house.className = 'house';
-        house.title = 'House';
+        house.className = 'house'; house.title = 'House';
         buildDiv.appendChild(house);
       }
       for (let j = 0; j < t.v; j++) {
         let villa = document.createElement('div');
-        villa.className = 'villa';
-        villa.title = 'Hotel';
+        villa.className = 'villa'; villa.title = 'Hotel';
         buildDiv.appendChild(villa);
       }
       div.appendChild(buildDiv);
     }
-    let pawnsHere = players.filter((p, idx) => p.pos === i);
-    if (pawnsHere.length > 0) {
-      let pawnDiv = document.createElement('div');
-      pawnDiv.style.marginTop = '5px';
-      pawnsHere.forEach(p => {
-        let pawn = document.createElement('div');
-        pawn.className = 'pawn';
-        pawn.style.background = p.color;
-        pawn.title = p.name;
-        pawnDiv.appendChild(pawn);
-      });
-      div.appendChild(pawnDiv);
+
+    // Bottom row: owner dot on left, pawns on right
+    let bottomDiv = document.createElement('div');
+    bottomDiv.className = 'tile-bottom';
+
+    let ownerSlot = document.createElement('div');
+    if (t.o >= 0) {
+      let dot = document.createElement('div');
+      dot.className = 'owner-dot';
+      dot.style.background = players[t.o].color;
+      dot.title = players[t.o].name;
+      dot.textContent = players[t.o].name[0];
+      ownerSlot.appendChild(dot);
     }
+    bottomDiv.appendChild(ownerSlot);
+
+    let pawnsArea = document.createElement('div');
+    pawnsArea.className = 'pawns-area';
+    let pawnsHere = players.filter(p => p.pos === i);
+    pawnsHere.forEach(p => {
+      let pawn = document.createElement('div');
+      pawn.className = 'pawn';
+      pawn.style.background = p.color;
+      pawn.title = p.name;
+      pawnsArea.appendChild(pawn);
+    });
+    bottomDiv.appendChild(pawnsArea);
+    div.appendChild(bottomDiv);
+    
+    // C. Add general tile click handler for tile display (unless in specific mode)
+    let modeHandlerSet = false;
     if (sellingMode && t.o === current) {
       div.classList.add('sellable');
       div.onclick = () => sellProperty(i);
+      modeHandlerSet = true;
     }
     if (buildMode && canBuildOn(i)) {
       div.classList.add('buildable');
       div.onclick = () => buildOnProperty(i);
+      modeHandlerSet = true;
     }
     if (mortgageMode && t.o === current && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility') && !t.mortgaged && t.h === 0 && t.v === 0) {
       div.classList.add('mortgageable');
       div.onclick = () => mortgageProperty(i);
+      modeHandlerSet = true;
     }
     if (unmortgageMode && t.o === current && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility') && t.mortgaged) {
       div.classList.add('unmortgageable');
       div.onclick = () => unmortgageProperty(i);
+      modeHandlerSet = true;
     }
+    
+    // If no mode-specific handler, add general tile info handler
+    if (!modeHandlerSet) {
+      div.onclick = () => displayTileInfo(i);
+      div.style.cursor = 'pointer';
+    }
+    
+    // Position tile on the 10×10 perimeter grid
+    let [col, row] = tileGridPos(i);
+    div.style.gridColumn = (col + 1) + '';
+    div.style.gridRow = (row + 1) + '';
+
     board.appendChild(div);
   }
 }
@@ -1130,12 +1378,56 @@ function sellProperty(tileIndex) {
     log('⚠️ You don\'t own this property', 'log-action');
     return;
   }
-  if (t.h > 0 || t.v > 0) {
-    log('⚠️ Must sell buildings first!', 'log-action');
+  
+  // Even building rule for selling: can only sell from properties with the MOST buildings
+  if (t.type === 'property' && (t.h > 0 || t.v > 0)) {
+    let sameRow = tiles.filter(tile => tile.type === 'property' && tile.row === t.row && tile.o === current);
+    let maxHouses = Math.max(...sameRow.map(tile => tile.h + (tile.v * 5))); // Count hotels as 5
+    let currentHouses = t.h + (t.v * 5);
+    if (currentHouses < maxHouses) {
+      log('⚠️ Even building rule: Must sell from properties with the most buildings first!', 'log-action');
+      return;
+    }
+  }
+  
+  // If there are buildings, sell one building at a time
+  if (t.v > 0) {
+    // Sell one hotel first
+    let sellPrice = Math.floor(t.buildCost * 0.5);
+    t.v--;
+    t.h = 4; // Hotel downgrades to 4 houses
+    p.money += sellPrice;
+    log(`💵 ${p.name} sold 1 hotel on ${t.name} for $${sellPrice} (downgraded to 4 houses)`, 'log-income');
+    beep(500);
+    if (gameMode === 'online' && isMyTurn) {
+      sendAction('sell-building', { tileIndex: tileIndex, playerIndex: current, amount: sellPrice, buildingType: 'villa' });
+    }
+    draw();
+    updatePanels();
+    updateButtons();
     return;
   }
+  
+  if (t.h > 0) {
+    // Sell one house
+    let sellPrice = Math.floor(t.buildCost * 0.5);
+    t.h--;
+    p.money += sellPrice;
+    log(`💵 ${p.name} sold 1 house on ${t.name} for $${sellPrice}`, 'log-income');
+    beep(500);
+    if (gameMode === 'online' && isMyTurn) {
+      sendAction('sell-building', { tileIndex: tileIndex, playerIndex: current, amount: sellPrice, buildingType: 'house' });
+    }
+    draw();
+    updatePanels();
+    updateButtons();
+    return;
+  }
+  
+  // No buildings - sell the property itself
   let sellPrice = Math.floor(t.price * 0.5);
   t.o = -1;
+  t.mortgaged = false; // Clear mortgage when selling
   p.money += sellPrice;
   log(`💵 ${p.name} sold ${t.name} for $${sellPrice}`, 'log-income');
   beep(500);
@@ -1167,18 +1459,34 @@ function canBuildOn(tileIndex) {
   let t = tiles[tileIndex];
   if (t.type !== 'property') return false;
   if (t.o !== current) return false;
+  if (t.mortgaged) return false; // Can't build on mortgaged property
   let sameRow = tiles.filter(tile => tile.type === 'property' && tile.row === t.row);
   let monopoly = sameRow.every(tile => tile.o === current);
   if (!monopoly) return false;
+  
   if (buildMode === 'house') {
     if (t.h >= 4) return false;
     if (t.v > 0) return false;
-    return players[current].money >= t.buildCost;
+    if (players[current].money < t.buildCost) return false;
+    
+    // Even building rule: You can only build if this property doesn't already have more houses than others
+    let minHouses = Math.min(...sameRow.map(tile => tile.h + (tile.v * 5))); // Count hotels as 5
+    let currentHouses = t.h + (t.v * 5);
+    // Can only build if this property has the minimum number of houses (or tied for minimum)
+    if (currentHouses > minHouses) return false;
+    
+    return true;
   }
   if (buildMode === 'villa') {
-    if (t.h < 4) return false;
+    if (t.h !== 4) return false; // Must have exactly 4 houses
     if (t.v > 0) return false;
-    return players[current].money >= t.buildCost;
+    if (players[current].money < t.buildCost) return false;
+    
+    // Even building rule for hotels: All properties in monopoly must have 4 houses before any can get a hotel
+    let allHaveFourHouses = sameRow.every(tile => tile.h === 4 || tile.v > 0);
+    if (!allHaveFourHouses) return false;
+    
+    return true;
   }
   return false;
 }
@@ -1192,7 +1500,7 @@ function buildOnProperty(tileIndex) {
     p.money -= t.buildCost;
     log(`🏠 ${p.name} built a house on ${t.name} for $${t.buildCost}`, 'log-expense');
   } else if (buildMode === 'villa') {
-    t.h = 0;
+    t.h = 0; // Clear all houses
     t.v++;
     p.money -= t.buildCost;
     log(`🏨 ${p.name} built a hotel on ${t.name} for $${t.buildCost}`, 'log-expense');
@@ -1391,7 +1699,7 @@ function renderTradeProperties() {
       let item = document.createElement('div');
       item.className = 'property-item';
       if (tradeGiveProperties.includes(i)) item.classList.add('selected');
-      item.textContent = t.name;
+      item.textContent = `#${i} - ${t.name}`;
       item.onclick = () => toggleGiveProperty(i);
       giveDiv.appendChild(item);
     }
@@ -1406,7 +1714,7 @@ function renderTradeProperties() {
       let item = document.createElement('div');
       item.className = 'property-item';
       if (tradeReceiveProperties.includes(i)) item.classList.add('selected');
-      item.textContent = t.name;
+      item.textContent = `#${i} - ${t.name}`;
       item.onclick = () => toggleReceiveProperty(i);
       receiveDiv.appendChild(item);
     }
@@ -1559,12 +1867,12 @@ function startAuction(tileIndex) {
   auction = {
     tileIndex: tileIndex,
     tilePrice: t.price,
-    currentBid: 0,
+    currentBid: Math.floor(t.price / 2), // E. Start at half price
     highBidder: null,
     participants: [],
     activeSeat: 0,
-    auctionLog: [],
-    timerInterval: null
+    auctionLog: []
+    // D. Removed timerInterval
   };
   players.forEach((p, idx) => {
     auction.participants.push({
@@ -1585,16 +1893,12 @@ function renderAuction() {
   document.getElementById('auction-tile-name').textContent = t.name;
   document.getElementById('auction-market-price').textContent = `Market Price: $${auction.tilePrice}`;
   let bidDiv = document.getElementById('auction-current-bid');
-  if (auction.currentBid === 0) {
-    bidDiv.textContent = 'No bids yet — starts at $1';
-  } else {
-    bidDiv.textContent = `Current Bid: $${auction.currentBid}`;
-    if (auction.highBidder !== null) {
-      let bidder = auction.participants[auction.highBidder];
-      bidDiv.textContent += ` by ${players[bidder.playerIndex].name}`;
-    }
+  bidDiv.textContent = `Current Bid: $${auction.currentBid}`;
+  if (auction.highBidder !== null) {
+    let bidder = auction.participants[auction.highBidder];
+    bidDiv.textContent += ` by ${players[bidder.playerIndex].name}`;
   }
-  resetAuctionTimer();
+  // D. Removed resetAuctionTimer()
   let grid = document.getElementById('auction-players-grid');
   grid.innerHTML = '';
   auction.participants.forEach((part, seat) => {
@@ -1604,7 +1908,7 @@ function renderAuction() {
     let isOut = part.passed;
     let row = document.createElement('div');
     row.className = 'auction-player-row' + (isActive ? ' current-bidder' : '') + (isOut ? ' passed' : '') + (part.isAI ? ' ai-row' : '');
-    let nextBid = auction.currentBid + 50;
+    let nextBid = auction.currentBid + 20; // E. Change to $20 increment
     let canAfford = p.money >= nextBid;
     let statusHtml = '';
     if (isOut) {
@@ -1630,33 +1934,10 @@ function auctionLog(msg) {
   auction.auctionLog.push(msg);
 }
 
-function resetAuctionTimer() {
-  if (auction.timerInterval) clearInterval(auction.timerInterval);
-  let seconds = 20;
-  let bar = document.getElementById('auction-timer-bar');
-  bar.style.transition = 'none';
-  bar.style.width = '100%';
-  setTimeout(() => {
-    bar.style.transition = 'width 1s linear';
-  }, 50);
-  auction.timerInterval = setInterval(() => {
-    seconds--;
-    let pct = (seconds / 20) * 100;
-    bar.style.width = pct + '%';
-    bar.style.background = seconds > 10 ? 'linear-gradient(90deg, #27ae60, #f39c12)' : 'linear-gradient(90deg, #e74c3c, #c0392b)';
-    if (seconds <= 0) {
-      clearInterval(auction.timerInterval);
-      let part = auction.participants[auction.activeSeat];
-      if (!part.passed && !part.isAI) {
-        auctionLog(`⏰ ${players[part.playerIndex].name} timed out — auto-passed`);
-        auctionPass();
-      }
-    }
-  }, 1000);
-}
+// D. Removed resetAuctionTimer function
 
 function calcNextBid() {
-  return auction.currentBid + 50;
+  return auction.currentBid + 20; // E. Change to $20 increment
 }
 
 function auctionBid() {
@@ -1870,31 +2151,38 @@ document.addEventListener('keydown', function(e) {
 
 function updatePanels() {
   let panel = document.getElementById('panel');
-  panel.innerHTML = '<h3>Players</h3>';
+  panel.innerHTML = '<h3>👥 Players</h3>';
   players.forEach((p, idx) => {
     let card = document.createElement('div');
     card.className = 'player-card';
     card.style.borderColor = p.color;
     if (idx === current) card.classList.add('active');
-    let name = document.createElement('div');
-    name.style.fontWeight = 'bold';
-    name.style.fontSize = '16px';
+
+    // Color dot
+    let dot = document.createElement('div');
+    dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0;border:1.5px solid #333;`;
+    card.appendChild(dot);
+
+    let name = document.createElement('span');
+    name.className = 'pc-name';
     name.textContent = p.name;
-    let money = document.createElement('div');
-    money.textContent = `💰 $${p.money}`;
-    let properties = tiles.filter(t => t.o === idx && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility'));
-    let propCount = document.createElement('div');
-    propCount.style.fontSize = '12px';
-    propCount.style.color = '#7f8c8d';
-    propCount.textContent = `🏠 ${properties.length} properties`;
     card.appendChild(name);
+
+    let money = document.createElement('span');
+    money.className = 'pc-money';
+    money.textContent = `$${p.money}`;
     card.appendChild(money);
+
+    let properties = tiles.filter(t => t.o === idx && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility'));
+    let propCount = document.createElement('span');
+    propCount.className = 'pc-props';
+    propCount.textContent = `🏠${properties.length}`;
     card.appendChild(propCount);
+
     if (p.jailTurns > 0) {
-      let jail = document.createElement('div');
-      jail.textContent = `🔒 In Jail (${p.jailTurns} turns)`;
-      jail.style.color = '#e74c3c';
-      jail.style.fontWeight = 'bold';
+      let jail = document.createElement('span');
+      jail.className = 'pc-jail';
+      jail.textContent = `🔒${p.jailTurns}`;
       card.appendChild(jail);
     }
     panel.appendChild(card);
@@ -1917,6 +2205,7 @@ function updateButtons() {
   document.getElementById('endBtn').disabled = !rolled && p.jailTurns === 0 || !canPlay;
   document.getElementById('sellBtn').disabled = !canPlay;
   document.getElementById('buildBtn').disabled = !canPlay;
+  document.getElementById('villaBtn').disabled = !canPlay;
   document.getElementById('tradeBtn').disabled = !canPlay;
   document.getElementById('mortgageBtn').disabled = !canPlay;
   document.getElementById('unmortgageBtn').disabled = !canPlay;
@@ -1979,6 +2268,208 @@ function beep(freq) {
       setTimeout(() => osc.stop(), 100);
     } catch (e) {}
   }
+}
+
+// C. Display tile information when clicked
+function displayTileInfo(tileIndex) {
+  let t = tiles[tileIndex];
+  let contentDiv = document.getElementById('tile-info-content');
+  let html = `<div class="tile-info"><strong>Tile #${tileIndex}: ${t.name}</strong><br>`;
+  
+  if (t.type === 'property') {
+    html += `Type: Property<br>`;
+    html += `Price: $${t.price}<br>`;
+    html += `Build Cost: $${t.buildCost}<br>`;
+    if (t.o >= 0) {
+      html += `Owner: ${players[t.o].name}<br>`;
+      html += `Houses: ${t.h}, Hotels: ${t.v}<br>`;
+      if (t.mortgaged) html += `<span style="color:#e74c3c;font-weight:bold;">MORTGAGED</span><br>`;
+      let rentLevel = t.v > 0 ? 5 : t.h;
+      html += `Current Rent: $${t.rent[rentLevel]}`;
+    } else {
+      html += `Status: Unowned`;
+    }
+  } else if (t.type === 'railroad') {
+    html += `Type: Railroad<br>`;
+    html += `Price: $${t.price}<br>`;
+    if (t.o >= 0) {
+      let railCount = tiles.filter(tile => tile.type === 'railroad' && tile.o === t.o).length;
+      html += `Owner: ${players[t.o].name}<br>`;
+      html += `Railroads Owned: ${railCount}<br>`;
+      if (t.mortgaged) html += `<span style="color:#e74c3c;font-weight:bold;">MORTGAGED</span><br>`;
+      html += `Current Rent: $${[25, 50, 100, 200][railCount - 1]}`;
+    } else {
+      html += `Status: Unowned`;
+    }
+  } else if (t.type === 'utility') {
+    html += `Type: Utility<br>`;
+    html += `Price: $${t.price}<br>`;
+    if (t.o >= 0) {
+      let utilCount = tiles.filter(tile => tile.type === 'utility' && tile.o === t.o).length;
+      html += `Owner: ${players[t.o].name}<br>`;
+      html += `Utilities Owned: ${utilCount}<br>`;
+      if (t.mortgaged) html += `<span style="color:#e74c3c;font-weight:bold;">MORTGAGED</span><br>`;
+      html += `Rent: ${utilCount === 1 ? '4× dice' : '10× dice'}`;
+    } else {
+      html += `Status: Unowned`;
+    }
+  } else {
+    html += `Type: ${t.type}`;
+  }
+  
+  html += `</div>`;
+  contentDiv.innerHTML = html;
+}
+
+// B. Save game to localStorage
+function saveGame() {
+  console.log('=== SAVE GAME FUNCTION CALLED ===');
+  try {
+    // Validate game state before saving
+    if (!tiles || tiles.length === 0) {
+      alert('❌ No game data to save!\n\nPlease start a game first.');
+      console.error('Save failed: no tiles');
+      return;
+    }
+    if (!players || players.length === 0) {
+      alert('❌ No players to save!\n\nPlease start a game first.');
+      console.error('Save failed: no players');
+      return;
+    }
+    
+    console.log('Creating game state object...');
+    let gameState = {
+      tiles: tiles,
+      players: players,
+      current: current,
+      rolled: rolled,
+      diceRoll: diceRoll,
+      gameMode: gameMode,
+      numPlayers: numPlayers,
+      logEntries: logEntries
+    };
+    
+    let jsonData = JSON.stringify(gameState);
+    console.log(`Saving ${jsonData.length} characters to localStorage...`);
+    
+    localStorage.setItem('monopoly_save', jsonData);
+    console.log('Save successful!');
+    
+    alert(`✅ Game saved successfully!\n\nSaved ${jsonData.length} characters\n${players.length} players\nCurrent turn: ${players[current].name}`);
+    log('💾 Game saved', 'log-action');
+    console.log('=== SAVE COMPLETE ===');
+  } catch (e) {
+    console.error('Save error:', e);
+    alert('❌ Failed to save game: ' + e.message + '\n\nCheck browser console for details.');
+  }
+}
+
+// B. Load game from localStorage
+function loadGame() {
+  // Immediate visual feedback
+  console.log('=== LOAD GAME FUNCTION CALLED ===');
+  
+  try {
+    console.log('Attempting to get saved game...');
+    let saved = localStorage.getItem('monopoly_save');
+    console.log('Saved data:', saved ? `Found (${saved.length} chars)` : 'Not found');
+    
+    if (!saved) {
+      alert('❌ No saved game found!\n\nTo save a game:\n1. Start a new game\n2. Play for a bit\n3. Click "💾 Save Game" button');
+      console.log('No saved game in localStorage');
+      return;
+    }
+    
+    // Load immediately without confirmation
+    console.log('Parsing saved data...');
+    let gameState = JSON.parse(saved);
+    console.log('Game state parsed:', gameState);
+    
+    // Validate loaded data
+    if (!gameState.tiles || !gameState.players) {
+      alert('❌ Saved game data is corrupted!');
+      console.error('Corrupted data - missing tiles or players');
+      return;
+    }
+    
+    console.log('Restoring game state...');
+    tiles = gameState.tiles;
+    players = gameState.players;
+    current = gameState.current || 0;
+    rolled = gameState.rolled || false;
+    diceRoll = gameState.diceRoll || [0, 0];
+    gameMode = gameState.gameMode || 'local';
+    numPlayers = gameState.numPlayers || players.length;
+    logEntries = gameState.logEntries || [];
+    
+    // Clear modes
+    sellingMode = false;
+    buildMode = null;
+    mortgageMode = false;
+    unmortgageMode = false;
+    
+    console.log('Showing game screen...');
+    // Show game screen and hide menu screens
+    document.getElementById('menu-screen').style.display = 'none';
+    document.getElementById('player-count-screen').style.display = 'none';
+    document.getElementById('online-lobby').style.display = 'none';
+    document.getElementById('game-screen').style.display = 'block';
+    
+    console.log('Restoring log...');
+    // Restore log
+    let logDiv = document.getElementById('log');
+    if (logDiv) {
+      logDiv.innerHTML = '';
+      logEntries.forEach(entry => {
+        let div = document.createElement('div');
+        div.className = 'log-entry ' + (entry.type || '');
+        div.textContent = entry.msg;
+        logDiv.appendChild(div);
+      });
+    }
+    
+    console.log('Drawing board...');
+    draw();
+    updatePanels();
+    updateButtons();
+    alert('✅ Game loaded successfully!');
+    log('📂 Game loaded', 'log-action');
+    console.log('=== LOAD COMPLETE ===');
+  } catch (e) {
+    console.error('Load error:', e);
+    alert('❌ Failed to load game: ' + e.message + '\n\nCheck browser console for details.');
+  }
+}
+
+// B. End game and declare winner based on wealth
+function endGame() {
+  if (!confirm('🏆 End the game and declare a winner?')) {
+    return;
+  }
+  
+  // Calculate total wealth for each player
+  let rankings = players.map((p, idx) => {
+    let wealth = p.money;
+    tiles.forEach(t => {
+      if (t.o === idx) {
+        wealth += Math.floor(t.price * (t.mortgaged ? 0 : 0.5)); // Property value
+        if (t.type === 'property' && t.buildCost) {
+          wealth += (t.h * Math.floor(t.buildCost * 0.5)); // House value
+          wealth += (t.v * Math.floor(t.buildCost * 0.5)); // Hotel value
+        }
+      }
+    });
+    return { name: p.name, color: p.color, wealth: wealth, money: p.money };
+  }).sort((a, b) => b.wealth - a.wealth);
+  
+  let message = '🏆 FINAL RANKINGS 🏆\n\n';
+  rankings.forEach((r, idx) => {
+    message += `${idx + 1}. ${r.name}: $${r.wealth} (Cash: $${r.money})\n`;
+  });
+  message += `\n👑 WINNER: ${rankings[0].name}! 👑`;
+  
+  alert(message);
+  log(`🏆 Game ended! Winner: ${rankings[0].name} with $${rankings[0].wealth}`, 'log-action');
 }
 </script>
 </body>
