@@ -192,6 +192,7 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 #buildBtn { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; }
 #villaBtn { background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%); color: white; }
 #bailBtn { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333; }
+#gojfBtn { background: linear-gradient(135deg, #f9ca24 0%, #f0932b 100%); color: white; }
 #tradeBtn { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
 #mortgageBtn { background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%); color: white; }
 #unmortgageBtn { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
@@ -488,6 +489,7 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
               <button id="unmortgageBtn" onclick="enterUnmortgageMode()">💳 Unmtg (U)</button>
             </div>
             <button id="bailBtn" onclick="payBail()" style="display:none;">💸 Pay Bail $50 (B)</button>
+            <button id="gojfBtn" onclick="useJailFreeCard()" style="display:none;">🃏 Use GOJF Card</button>
           </div>
           <div id="log"></div>
         </div>
@@ -598,6 +600,17 @@ let tradeGiveProperties = [];
 let tradeReceiveProperties = [];
 let auction = null;
 
+// Cryptographically secure random number [0, 1)
+function secureRandom() {
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  return arr[0] / (0xFFFFFFFF + 1);
+}
+// Secure integer in [1, max]
+function secureRandInt(max) {
+  return Math.floor(secureRandom() * max) + 1;
+}
+
 // Classic Monopoly board setup (40 tiles arranged 8x5)
 const MONOPOLY_CLASSIC = [
   { name: 'GO', type: 'go' },
@@ -648,7 +661,7 @@ function resetGame(numP = 2) {
   const names = ['Red', 'Blue', 'Green', 'Orange'];
   players = [];
   for (let i = 0; i < numP; i++) {
-    players.push({ pos: 0, money: 1500, jailTurns: 0, color: colors[i], name: names[i], isAI: false });
+    players.push({ pos: 0, money: 1500, jailTurns: 0, color: colors[i], name: names[i], isAI: false, jailFreeCards: [] });
   }
   if (gameMode === 'ai') {
     for (let i = 1; i < numP; i++) {
@@ -664,6 +677,8 @@ function resetGame(numP = 2) {
   mortgageMode = false;
   unmortgageMode = false;
   logEntries = [];
+  chanceDeck = buildChanceDeck();
+  communityDeck = buildCommunityDeck();
   draw();
   updatePanels();
   updateButtons();
@@ -703,7 +718,10 @@ function startGame(numP) {
 }
 
 function generateRoomCode() {
-  return Math.random().toString(36).substr(2, 4).toUpperCase();
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const arr = new Uint8Array(4);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => chars[b % chars.length]).join('');
 }
 
 function createRoom() {
@@ -1112,7 +1130,7 @@ function roll() {
   }
   let p = players[current];
   if (p.jailTurns > 0) {
-    diceRoll = [Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)];
+    diceRoll = [secureRandInt(6), secureRandInt(6)];
     rolled = true;
     if (diceRoll[0] === diceRoll[1]) {
       p.jailTurns = 0;
@@ -1138,10 +1156,9 @@ function roll() {
     updateButtons();
     return;
   }
-  diceRoll = [Math.ceil(Math.random() * 6), Math.ceil(Math.random() * 6)];
+  diceRoll = [secureRandInt(6), secureRandInt(6)];
   rolled = true;
   let total = diceRoll[0] + diceRoll[1];
-  log(`🎲 ${p.name} rolled [${diceRoll[0]}, ${diceRoll[1]}] = ${total}`, 'log-action');
   beep(400);
   let newPos = (p.pos + total) % tiles.length;
   if (gameMode === 'online' && isMyTurn) {
@@ -1236,32 +1253,199 @@ function calcRent(tileIndex) {
   return monopoly ? t.rent[0] * 2 : t.rent[0];
 }
 
-function handleLuck() {
-  let events = [
-    { msg: '🎉 Bank error in your favor — Collect $200!', money: 200 },
-    { msg: '🏥 Doctor fees — Pay $50', money: -50 },
-    { msg: '💰 You won a lottery — Collect $100!', money: 100 },
-    { msg: '🎂 Birthday! Each player gives you $10', special: 'birthday' },
-    { msg: '🚗 Speeding fine — Pay $15', money: -15 },
-    { msg: '📚 School fees — Pay $150', money: -150 },
-    { msg: '🏆 Win a competition — Collect $25!', money: 25 }
-  ];
-  let event = events[Math.floor(Math.random() * events.length)];
-  let p = players[current];
-  if (event.special === 'birthday') {
-    players.forEach((other, idx) => {
-      if (idx !== current) {
-        other.money -= 10;
-        p.money += 10;
-      }
-    });
-  } else {
-    p.money += event.money;
-  }
-  log(event.msg, event.money >= 0 ? 'log-income' : 'log-expense');
-  beep(event.money >= 0 ? 600 : 300);
-  checkBankruptcy();
+// ── Chance & Community Chest ──────────────────────────────────────────────
+// Shuffled decks; reshuffled when exhausted. GOJF cards are held by a player
+// and removed from the deck until returned.
+
+let chanceDeck = [];
+let communityDeck = [];
+
+function buildChanceDeck() {
+  return shuffleDeck([
+    { id: 'ch_go',       msg: '🎲 Chance: Advance to GO — Collect $200!',              action: 'advance', dest: 0 },
+    { id: 'ch_illinois', msg: '🎲 Chance: Advance to Illinois Ave.',                   action: 'advance', dest: 24 },
+    { id: 'ch_stcharles',msg: '🎲 Chance: Advance to St. Charles Place.',              action: 'advance', dest: 11 },
+    { id: 'ch_railroad1',msg: '🎲 Chance: Advance to nearest Railroad.',               action: 'nearest_railroad' },
+    { id: 'ch_railroad2',msg: '🎲 Chance: Advance to nearest Railroad (×2 rent).',    action: 'nearest_railroad', doubleRent: true },
+    { id: 'ch_utility',  msg: '🎲 Chance: Advance to nearest Utility (10× dice).',    action: 'nearest_utility' },
+    { id: 'ch_dividend', msg: '🎲 Chance: Bank pays you dividend — Collect $50!',      action: 'money', amount: 50 },
+    { id: 'ch_gojf',     msg: '🎲 Chance: Get Out of Jail Free card!',                action: 'gojf' },
+    { id: 'ch_back3',    msg: '🎲 Chance: Go Back 3 Spaces.',                         action: 'back3' },
+    { id: 'ch_jail',     msg: '🎲 Chance: Go to Jail!',                               action: 'jail' },
+    { id: 'ch_repairs',  msg: '🎲 Chance: Make general repairs — $25/house, $100/hotel.', action: 'repairs', houseCost: 25, hotelCost: 100 },
+    { id: 'ch_fine',     msg: '🎲 Chance: Speeding fine — Pay $15.',                  action: 'money', amount: -15 },
+    { id: 'ch_reading',  msg: '🎲 Chance: Take a trip to Reading Railroad.',          action: 'advance', dest: 5 },
+    { id: 'ch_boardwalk',msg: '🎲 Chance: Advance to Boardwalk.',                     action: 'advance', dest: 39 },
+    { id: 'ch_chairs',   msg: '🎲 Chance: Elected chairman — Pay each player $50.',   action: 'chairman' },
+    { id: 'ch_loan',     msg: '🎲 Chance: Building loan matures — Collect $150!',     action: 'money', amount: 150 },
+  ]);
 }
+
+function buildCommunityDeck() {
+  return shuffleDeck([
+    { id: 'cc_go',       msg: '📦 Community Chest: Advance to GO — Collect $200!',    action: 'advance', dest: 0 },
+    { id: 'cc_bank',     msg: '📦 Community Chest: Bank error in your favor — Collect $200!', action: 'money', amount: 200 },
+    { id: 'cc_doctor',   msg: '📦 Community Chest: Doctor\'s fee — Pay $50.',         action: 'money', amount: -50 },
+    { id: 'cc_stock',    msg: '📦 Community Chest: From sale of stock — Collect $50!', action: 'money', amount: 50 },
+    { id: 'cc_gojf',     msg: '📦 Community Chest: Get Out of Jail Free card!',       action: 'gojf' },
+    { id: 'cc_jail',     msg: '📦 Community Chest: Go to Jail!',                      action: 'jail' },
+    { id: 'cc_opera',    msg: '📦 Community Chest: Grand Opera Night — Collect $50 from each player!', action: 'collect_each', amount: 50 },
+    { id: 'cc_holiday',  msg: '📦 Community Chest: Holiday fund matures — Collect $100!', action: 'money', amount: 100 },
+    { id: 'cc_income',   msg: '📦 Community Chest: Income tax refund — Collect $20!', action: 'money', amount: 20 },
+    { id: 'cc_birthday', msg: '📦 Community Chest: It\'s your birthday — Collect $10 from each player!', action: 'collect_each', amount: 10 },
+    { id: 'cc_life',     msg: '📦 Community Chest: Life insurance matures — Collect $100!', action: 'money', amount: 100 },
+    { id: 'cc_hospital', msg: '📦 Community Chest: Hospital fees — Pay $100.',        action: 'money', amount: -100 },
+    { id: 'cc_school',   msg: '📦 Community Chest: School fees — Pay $150.',          action: 'money', amount: -150 },
+    { id: 'cc_consult',  msg: '📦 Community Chest: Receive consultancy fee — Collect $25!', action: 'money', amount: 25 },
+    { id: 'cc_repairs',  msg: '📦 Community Chest: Street repairs — $40/house, $115/hotel.', action: 'repairs', houseCost: 40, hotelCost: 115 },
+    { id: 'cc_beauty',   msg: '📦 Community Chest: Won second prize in beauty contest — Collect $10!', action: 'money', amount: 10 },
+    { id: 'cc_inherit',  msg: '📦 Community Chest: You inherit $100!',                action: 'money', amount: 100 },
+  ]);
+}
+
+function shuffleDeck(deck) {
+  // Fisher-Yates with crypto
+  for (let i = deck.length - 1; i > 0; i--) {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    const j = arr[0] % (i + 1);
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+  return deck;
+}
+
+function drawCard(deckType) {
+  let deck = deckType === 'chance' ? chanceDeck : communityDeck;
+  if (deck.length === 0) {
+    // Reshuffle, but don't include GOJF cards currently held by players
+    const heldCards = players.flatMap(p => p.jailFreeCards || []);
+    let newDeck = deckType === 'chance' ? buildChanceDeck() : buildCommunityDeck();
+    deck = newDeck.filter(c => !heldCards.includes(c.id));
+    if (deckType === 'chance') chanceDeck = deck; else communityDeck = deck;
+  }
+  const card = deck.shift();
+  if (deckType === 'chance') chanceDeck = deck; else communityDeck = deck;
+  return card;
+}
+
+function handleCard(deckType) {
+  let card = drawCard(deckType);
+  let p = players[current];
+  log(card.msg, 'log-action');
+  beep(550);
+
+  switch (card.action) {
+    case 'money':
+      p.money += card.amount;
+      log(card.amount >= 0 ? `💰 +$${card.amount}` : `💸 -$${Math.abs(card.amount)}`,
+          card.amount >= 0 ? 'log-income' : 'log-expense');
+      checkBankruptcy();
+      break;
+
+    case 'advance': {
+      const oldPos = p.pos;
+      const newPos = card.dest;
+      if (newPos < oldPos) {        // passed GO
+        p.money += 200;
+        log(`💰 ${p.name} passed GO — Collect $200!`, 'log-income');
+      }
+      p.pos = newPos;
+      landOnTile();
+      break;
+    }
+
+    case 'nearest_railroad': {
+      const railroads = [5, 15, 25, 35];
+      let nearest = railroads.find(r => r > p.pos) || railroads[0];
+      if (nearest <= p.pos) { p.money += 200; log(`💰 ${p.name} passed GO — Collect $200!`, 'log-income'); }
+      p.pos = nearest;
+      if (card.doubleRent) {
+        let t = tiles[nearest];
+        if (t.o >= 0 && t.o !== current && !t.mortgaged) {
+          let rent = calcRent(nearest) * 2;
+          p.money -= rent; players[t.o].money += rent;
+          log(`💸 ${p.name} paid DOUBLE rent $${rent} to ${players[t.o].name}`, 'log-expense');
+          checkBankruptcy();
+        }
+      } else { landOnTile(); }
+      break;
+    }
+
+    case 'nearest_utility': {
+      const utilities = [12, 28];
+      let nearest = utilities.find(u => u > p.pos) || utilities[0];
+      if (nearest <= p.pos) { p.money += 200; log(`💰 ${p.name} passed GO — Collect $200!`, 'log-income'); }
+      p.pos = nearest;
+      let t = tiles[nearest];
+      if (t.o >= 0 && t.o !== current && !t.mortgaged) {
+        let rent = (diceRoll[0] + diceRoll[1]) * 10;  // Chance: always 10× dice
+        p.money -= rent; players[t.o].money += rent;
+        log(`💸 ${p.name} paid $${rent} (10× dice) to ${players[t.o].name}`, 'log-expense');
+        checkBankruptcy();
+      }
+      break;
+    }
+
+    case 'gojf':
+      if (!p.jailFreeCards) p.jailFreeCards = [];
+      p.jailFreeCards.push(card.id);
+      log(`🃏 ${p.name} keeps the Get Out of Jail Free card!`, 'log-income');
+      break;
+
+    case 'back3': {
+      let newPos = (p.pos - 3 + 40) % 40;
+      p.pos = newPos;
+      landOnTile();
+      break;
+    }
+
+    case 'jail':
+      p.pos = 10;
+      p.jailTurns = 3;
+      log(`🚓 ${p.name} sent to JAIL!`, 'log-expense');
+      beep(200);
+      break;
+
+    case 'repairs': {
+      let houses = tiles.filter(t => t.o === current).reduce((s, t) => s + t.h, 0);
+      let hotels = tiles.filter(t => t.o === current).reduce((s, t) => s + t.v, 0);
+      let cost = houses * card.houseCost + hotels * card.hotelCost;
+      p.money -= cost;
+      log(`🔨 Repairs: ${houses} houses × $${card.houseCost} + ${hotels} hotels × $${card.hotelCost} = $${cost}`, 'log-expense');
+      checkBankruptcy();
+      break;
+    }
+
+    case 'chairman':
+      players.forEach((other, idx) => {
+        if (idx !== current) { other.money += 50; p.money -= 50; }
+      });
+      log(`💸 ${p.name} paid $50 to each player as chairman`, 'log-expense');
+      checkBankruptcy();
+      break;
+
+    case 'collect_each':
+      players.forEach((other, idx) => {
+        if (idx !== current) { other.money -= card.amount; p.money += card.amount; }
+      });
+      log(`💰 ${p.name} collected $${card.amount} from each player`, 'log-income');
+      checkBankruptcy();
+      break;
+  }
+}
+
+function handleLuck() {
+  // Determine whether this is a Chance or Community Chest tile
+  let t = tiles[players[current].pos];
+  // Chance tiles: 7, 22, 36 — Community Chest: 2, 17, 33
+  const chanceTiles = [7, 22, 36];
+  if (chanceTiles.includes(players[current].pos)) {
+    handleCard('chance');
+  } else {
+    handleCard('community');
+  }
+}
+
 
 function buy() {
   let p = players[current];
@@ -1354,6 +1538,20 @@ function payBail() {
   p.jailTurns = 0;
   log(`🔓 ${p.name} paid $50 bail and left jail`, 'log-expense');
   beep(500);
+  draw();
+  updatePanels();
+  updateButtons();
+}
+
+function useJailFreeCard() {
+  let p = players[current];
+  if (p.jailTurns === 0) { log('⚠️ Not in jail!', 'log-action'); return; }
+  if (!p.jailFreeCards || p.jailFreeCards.length === 0) { log('⚠️ No Get Out of Jail Free card!', 'log-action'); return; }
+  const cardId = p.jailFreeCards.pop();
+  p.jailTurns = 0;
+  // Return card to the appropriate deck (will be reshuffled in)
+  log(`🃏 ${p.name} used Get Out of Jail Free card and is released!`, 'log-income');
+  beep(600);
   draw();
   updatePanels();
   updateButtons();
@@ -2003,13 +2201,13 @@ function advanceAuctionIfAI() {
     let p = players[part.playerIndex];
     let nextBid = calcNextBid();
     let bidThreshold = auction.tilePrice * 0.75;
-    let shouldBid = nextBid <= bidThreshold && p.money >= nextBid * 2 && Math.random() > 0.25;
+    let shouldBid = nextBid <= bidThreshold && p.money >= nextBid * 2 && secureRandom() > 0.25;
     if (shouldBid) {
       auctionBid();
     } else {
       auctionPass();
     }
-  }, 700 + Math.random() * 500);
+  }, 700 + Math.floor(secureRandom() * 500));
 }
 
 function finishAuction(winner) {
@@ -2185,6 +2383,12 @@ function updatePanels() {
       jail.textContent = `🔒${p.jailTurns}`;
       card.appendChild(jail);
     }
+    if (p.jailFreeCards && p.jailFreeCards.length > 0) {
+      let jfc = document.createElement('span');
+      jfc.style.cssText = 'font-size:11px;color:#f0932b;font-weight:bold;';
+      jfc.textContent = `🃏×${p.jailFreeCards.length}`;
+      card.appendChild(jfc);
+    }
     panel.appendChild(card);
   });
   let status = document.getElementById('status');
@@ -2210,11 +2414,14 @@ function updateButtons() {
   document.getElementById('mortgageBtn').disabled = !canPlay;
   document.getElementById('unmortgageBtn').disabled = !canPlay;
   let bailBtn = document.getElementById('bailBtn');
+  let gojfBtn = document.getElementById('gojfBtn');
   if (p.jailTurns > 0 && canPlay) {
     bailBtn.style.display = 'inline-block';
     bailBtn.disabled = p.money < 50;
+    gojfBtn.style.display = (p.jailFreeCards && p.jailFreeCards.length > 0) ? 'inline-block' : 'none';
   } else {
     bailBtn.style.display = 'none';
+    gojfBtn.style.display = 'none';
   }
 }
 
@@ -2275,48 +2482,100 @@ function displayTileInfo(tileIndex) {
   let t = tiles[tileIndex];
   let contentDiv = document.getElementById('tile-info-content');
   let html = `<div class="tile-info"><strong>Tile #${tileIndex}: ${t.name}</strong><br>`;
-  
+
   if (t.type === 'property') {
-    html += `Type: Property<br>`;
-    html += `Price: $${t.price}<br>`;
-    html += `Build Cost: $${t.buildCost}<br>`;
-    if (t.o >= 0) {
-      html += `Owner: ${players[t.o].name}<br>`;
-      html += `Houses: ${t.h}, Hotels: ${t.v}<br>`;
-      if (t.mortgaged) html += `<span style="color:#e74c3c;font-weight:bold;">MORTGAGED</span><br>`;
-      let rentLevel = t.v > 0 ? 5 : t.h;
-      html += `Current Rent: $${t.rent[rentLevel]}`;
-    } else {
-      html += `Status: Unowned`;
-    }
+    const colorNames = ['Brown','Light Blue','Pink','Orange','Red','Yellow','Green','Dark Blue'];
+    html += `<em>${colorNames[t.row] || 'Property'} group &bull; Price: $${t.price} &bull; Build: $${t.buildCost}/house</em><br>`;
+    if (t.o >= 0) html += `Owner: <strong style="color:${players[t.o].color}">${players[t.o].name}</strong>`;
+    else html += `Status: <em>Unowned</em>`;
+    if (t.mortgaged) html += ` &nbsp;<span style="color:#e74c3c;font-weight:bold;">[MORTGAGED]</span>`;
+    html += `<br>`;
+    if (t.h > 0) html += `Buildings: ${t.h} house${t.h > 1 ? 's' : ''}<br>`;
+    if (t.v > 0) html += `Buildings: 🏨 Hotel<br>`;
+
+    // Full rent breakdown table
+    const activeLevel = t.v > 0 ? 5 : t.h > 0 ? t.h : 0;
+    const labels = ['Base rent','1 House','2 Houses','3 Houses','4 Houses','Hotel'];
+    html += `<table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:11px;">`;
+    html += `<tr style="background:#f0f0f0;"><th style="text-align:left;padding:2px 4px;">Level</th><th style="text-align:right;padding:2px 4px;">Rent</th><th style="text-align:left;padding:2px 8px;font-size:10px;color:#888;">Note</th></tr>`;
+    labels.forEach((label, idx) => {
+      const isActive = idx === activeLevel;
+      const monopoly = tiles.filter(tile => tile.type === 'property' && tile.row === t.row).every(tile => tile.o === t.o);
+      let rentVal = t.rent[idx];
+      let note = '';
+      if (idx === 0 && monopoly && t.h === 0 && t.v === 0) { rentVal = t.rent[0] * 2; note = '(monopoly ×2)'; }
+      const bg = isActive ? 'background:#fff3cd;font-weight:bold;' : '';
+      html += `<tr style="${bg}">
+        <td style="padding:2px 4px;">${isActive ? '▶ ' : ''}${label}</td>
+        <td style="text-align:right;padding:2px 4px;color:#c0392b;">$${rentVal}</td>
+        <td style="padding:2px 8px;font-size:10px;color:#888;">${note}</td>
+      </tr>`;
+    });
+    html += `</table>`;
+    const mortgageVal = Math.floor(t.price * 0.5);
+    const unmortgageCost = Math.floor(mortgageVal * 1.1);
+    html += `<div style="margin-top:4px;font-size:10px;color:#666;">Mortgage: $${mortgageVal} &bull; Unmortgage: $${unmortgageCost}</div>`;
+
   } else if (t.type === 'railroad') {
-    html += `Type: Railroad<br>`;
-    html += `Price: $${t.price}<br>`;
-    if (t.o >= 0) {
-      let railCount = tiles.filter(tile => tile.type === 'railroad' && tile.o === t.o).length;
-      html += `Owner: ${players[t.o].name}<br>`;
-      html += `Railroads Owned: ${railCount}<br>`;
-      if (t.mortgaged) html += `<span style="color:#e74c3c;font-weight:bold;">MORTGAGED</span><br>`;
-      html += `Current Rent: $${[25, 50, 100, 200][railCount - 1]}`;
-    } else {
-      html += `Status: Unowned`;
-    }
+    html += `<em>Railroad &bull; Price: $${t.price}</em><br>`;
+    if (t.o >= 0) html += `Owner: <strong style="color:${players[t.o].color}">${players[t.o].name}</strong>`;
+    else html += `Status: <em>Unowned</em>`;
+    if (t.mortgaged) html += ` &nbsp;<span style="color:#e74c3c;font-weight:bold;">[MORTGAGED]</span>`;
+    html += `<br>`;
+    const railCount = t.o >= 0 ? tiles.filter(tile => tile.type === 'railroad' && tile.o === t.o).length : 0;
+    const railRents = [25, 50, 100, 200];
+    html += `<table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:11px;">`;
+    html += `<tr style="background:#f0f0f0;"><th style="text-align:left;padding:2px 4px;">Railroads owned</th><th style="text-align:right;padding:2px 4px;">Rent</th></tr>`;
+    [1,2,3,4].forEach(n => {
+      const isActive = t.o >= 0 && n === railCount;
+      const bg = isActive ? 'background:#fff3cd;font-weight:bold;' : '';
+      html += `<tr style="${bg}">
+        <td style="padding:2px 4px;">${isActive ? '▶ ' : ''}${n} railroad${n > 1 ? 's' : ''}</td>
+        <td style="text-align:right;padding:2px 4px;color:#c0392b;">$${railRents[n-1]}</td>
+      </tr>`;
+    });
+    html += `</table>`;
+    const mortgageVal = Math.floor(t.price * 0.5);
+    html += `<div style="margin-top:4px;font-size:10px;color:#666;">Mortgage: $${mortgageVal} &bull; Unmortgage: $${Math.floor(mortgageVal*1.1)}</div>`;
+
   } else if (t.type === 'utility') {
-    html += `Type: Utility<br>`;
-    html += `Price: $${t.price}<br>`;
-    if (t.o >= 0) {
-      let utilCount = tiles.filter(tile => tile.type === 'utility' && tile.o === t.o).length;
-      html += `Owner: ${players[t.o].name}<br>`;
-      html += `Utilities Owned: ${utilCount}<br>`;
-      if (t.mortgaged) html += `<span style="color:#e74c3c;font-weight:bold;">MORTGAGED</span><br>`;
-      html += `Rent: ${utilCount === 1 ? '4× dice' : '10× dice'}`;
-    } else {
-      html += `Status: Unowned`;
-    }
+    html += `<em>Utility &bull; Price: $${t.price}</em><br>`;
+    if (t.o >= 0) html += `Owner: <strong style="color:${players[t.o].color}">${players[t.o].name}</strong>`;
+    else html += `Status: <em>Unowned</em>`;
+    if (t.mortgaged) html += ` &nbsp;<span style="color:#e74c3c;font-weight:bold;">[MORTGAGED]</span>`;
+    html += `<br>`;
+    const utilCount = t.o >= 0 ? tiles.filter(tile => tile.type === 'utility' && tile.o === t.o).length : 0;
+    html += `<table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:11px;">`;
+    html += `<tr style="background:#f0f0f0;"><th style="text-align:left;padding:2px 4px;">Utilities owned</th><th style="text-align:right;padding:2px 4px;">Rent</th></tr>`;
+    [[1,'4× dice roll'],[2,'10× dice roll']].forEach(([n, label]) => {
+      const isActive = t.o >= 0 && n === utilCount;
+      const bg = isActive ? 'background:#fff3cd;font-weight:bold;' : '';
+      html += `<tr style="${bg}">
+        <td style="padding:2px 4px;">${isActive ? '▶ ' : ''}${n} utilit${n === 1 ? 'y' : 'ies'}</td>
+        <td style="text-align:right;padding:2px 4px;color:#c0392b;">${label}</td>
+      </tr>`;
+    });
+    html += `</table>`;
+    const mortgageVal = Math.floor(t.price * 0.5);
+    html += `<div style="margin-top:4px;font-size:10px;color:#666;">Mortgage: $${mortgageVal} &bull; Unmortgage: $${Math.floor(mortgageVal*1.1)}</div>`;
+
+  } else if (t.type === 'tax') {
+    html += `Type: Tax &bull; Amount: <strong>$${t.amount}</strong>`;
+  } else if (t.type === 'go') {
+    html += `Collect <strong>$200</strong> when passing or landing.`;
+  } else if (t.type === 'jail') {
+    html += `Just Visiting — no effect unless sent here by Go to Jail.`;
+  } else if (t.type === 'gotojail') {
+    html += `<strong>Go to Jail!</strong> Move directly to Jail, do not pass GO.`;
+  } else if (t.type === 'freeparking') {
+    html += `Free Parking — no effect.`;
+  } else if (t.type === 'luck') {
+    const chanceTiles = [7, 22, 36];
+    html += chanceTiles.includes(tileIndex) ? `🎲 <strong>Chance</strong> — Draw a Chance card.` : `📦 <strong>Community Chest</strong> — Draw a Community Chest card.`;
   } else {
     html += `Type: ${t.type}`;
   }
-  
+
   html += `</div>`;
   contentDiv.innerHTML = html;
 }
