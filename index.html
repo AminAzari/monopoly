@@ -2035,29 +2035,192 @@ function rejectTrade() {
 
 function evaluateAITrade() {
   let trade = currentTrade;
+  let aiPlayerIndex = selectedPartner;
+  let humanPlayerIndex = current;
+  
   // From AI's perspective:
   // - trade.giveMoney/giveProperties = what the HUMAN gives (AI RECEIVES)
   // - trade.receiveMoney/receiveProperties = what the HUMAN receives (AI GIVES)
   
+  // ═══════════════════════════════════════════════════════════════
+  // CRITICAL MONOPOLY CHECKS - These can override any trade
+  // ═══════════════════════════════════════════════════════════════
+  
+  // Check if AI would be COMPLETING a monopoly for the human (BAD!)
+  let humanGetsMonopoly = false;
+  trade.receiveProperties.forEach(propIdx => {
+    let tile = tiles[propIdx];
+    if (tile.type === 'property') {
+      let colorGroup = tile.row;
+      let afterTrade = getColorGroupOwner(colorGroup, humanPlayerIndex, trade.receiveProperties);
+      if (afterTrade === humanPlayerIndex) {
+        humanGetsMonopoly = true;
+      }
+    }
+  });
+  
+  // Check if AI would be BREAKING their own potential monopoly (BAD!)
+  let aiBreaksOwnMonopoly = false;
+  trade.receiveProperties.forEach(propIdx => {
+    let tile = tiles[propIdx];
+    if (tile.type === 'property') {
+      let colorGroup = tile.row;
+      // Check if AI currently owns most of this color group
+      let groupTiles = tiles.filter(t => t.type === 'property' && t.row === colorGroup);
+      let aiOwned = groupTiles.filter(t => t.o === aiPlayerIndex).length;
+      if (aiOwned >= groupTiles.length - 1) {
+        // AI owns all but one - giving this away breaks potential monopoly
+        aiBreaksOwnMonopoly = true;
+      }
+    }
+  });
+  
+  // Check if AI would be GAINING a monopoly (VERY GOOD!)
+  let aiGetsMonopoly = false;
+  trade.giveProperties.forEach(propIdx => {
+    let tile = tiles[propIdx];
+    if (tile.type === 'property') {
+      let colorGroup = tile.row;
+      let afterTrade = getColorGroupOwner(colorGroup, aiPlayerIndex, trade.giveProperties);
+      if (afterTrade === aiPlayerIndex) {
+        aiGetsMonopoly = true;
+      }
+    }
+  });
+  
+  // HARD REJECTION RULES - Never accept these trades
+  if (humanGetsMonopoly && !aiGetsMonopoly) {
+    // NEVER give human a monopoly unless AI also gets one
+    rejectTrade();
+    return;
+  }
+  
+  if (aiBreaksOwnMonopoly && !aiGetsMonopoly) {
+    // NEVER break own monopoly potential unless getting a monopoly
+    rejectTrade();
+    return;
+  }
+  
+  // Check if human already has hotels/houses that make them dangerous
+  let humanHasHotels = tiles.some(t => t.o === humanPlayerIndex && t.h >= 4);
+  if (humanGetsMonopoly && humanHasHotels) {
+    // EXTRA dangerous - human already has development, don't give them more
+    rejectTrade();
+    return;
+  }
+  
+  // ═══════════════════════════════════════════════════════════════
+  // VALUE CALCULATION - Strategic property valuation
+  // ═══════════════════════════════════════════════════════════════
+  
   // Calculate what AI is RECEIVING (from human)
   let aiReceivesValue = trade.giveMoney;
   trade.giveProperties.forEach(i => {
-    aiReceivesValue += tiles[i].price;
+    aiReceivesValue += calculateStrategicValue(i, aiPlayerIndex);
   });
   
-  // Calculate what AI is GIVING (to human)
+  // Calculate what AI is GIVING (to human)  
   let aiGivesValue = trade.receiveMoney;
   trade.receiveProperties.forEach(i => {
-    aiGivesValue += tiles[i].price;
+    aiGivesValue += calculateStrategicValue(i, humanPlayerIndex);
   });
   
-  // AI accepts if what it receives is worth at least 90% of what it gives
-  // (i.e., AI won't accept deals where it loses more than 10% value)
-  if (aiReceivesValue >= aiGivesValue * 0.9) {
+  // ═══════════════════════════════════════════════════════════════
+  // DECISION LOGIC - Monopoly-aware acceptance criteria
+  // ═══════════════════════════════════════════════════════════════
+  
+  // If AI gets a monopoly, be much more lenient (accept up to 30% loss)
+  if (aiGetsMonopoly) {
+    if (aiReceivesValue >= aiGivesValue * 0.7) {
+      acceptTrade();
+      return;
+    }
+  }
+  
+  // If both get monopolies, be fair (10% margin)
+  if (aiGetsMonopoly && humanGetsMonopoly) {
+    if (aiReceivesValue >= aiGivesValue * 0.9) {
+      acceptTrade();
+      return;
+    }
+  }
+  
+  // For railroad/utility trades, be more lenient
+  let allUtilitiesOrRailroads = trade.receiveProperties.every(i => 
+    tiles[i].type === 'railroad' || tiles[i].type === 'utility'
+  );
+  if (allUtilitiesOrRailroads && aiReceivesValue >= aiGivesValue * 0.85) {
+    acceptTrade();
+    return;
+  }
+  
+  // Standard trade: require fair value (5% margin)
+  if (aiReceivesValue >= aiGivesValue * 0.95) {
     acceptTrade();
   } else {
     rejectTrade();
   }
+}
+
+// Helper: Calculate strategic value of a property (not just price)
+function calculateStrategicValue(tileIndex, forPlayerIndex) {
+  let tile = tiles[tileIndex];
+  let baseValue = tile.price || 0;
+  
+  if (tile.type === 'property') {
+    let colorGroup = tile.row;
+    let groupTiles = tiles.filter(t => t.type === 'property' && t.row === colorGroup);
+    let playerOwned = groupTiles.filter(t => t.o === forPlayerIndex).length;
+    
+    // Property is worth MORE if it completes or near-completes a monopoly
+    if (playerOwned === groupTiles.length - 1) {
+      // This would complete the monopoly - worth 3x!
+      return baseValue * 3;
+    } else if (playerOwned === groupTiles.length - 2) {
+      // Second property in group - worth 2x
+      return baseValue * 2;
+    } else if (playerOwned > 0) {
+      // At least one in group - worth 1.5x
+      return baseValue * 1.5;
+    }
+    
+    // Property with houses/hotels is worth more
+    if (tile.h > 0) {
+      return baseValue + (tile.h * tile.buildCost * 0.8);
+    }
+  }
+  
+  if (tile.type === 'railroad') {
+    let railroadsOwned = tiles.filter(t => t.type === 'railroad' && t.o === forPlayerIndex).length;
+    // Railroads scale exponentially - completing set is valuable
+    return baseValue * (1 + railroadsOwned * 0.5);
+  }
+  
+  if (tile.type === 'utility') {
+    let utilitiesOwned = tiles.filter(t => t.type === 'utility' && t.o === forPlayerIndex).length;
+    // Having both utilities is worth more
+    return baseValue * (utilitiesOwned === 1 ? 1.5 : 1);
+  }
+  
+  return baseValue;
+}
+
+// Helper: Check who would own a color group after a trade
+function getColorGroupOwner(colorGroup, potentialOwner, tradedProperties) {
+  let groupTiles = tiles.filter(t => t.type === 'property' && t.row === colorGroup);
+  let owned = 0;
+  
+  groupTiles.forEach(t => {
+    let tileIdx = tiles.indexOf(t);
+    // Check if this tile would belong to potentialOwner after trade
+    if (tradedProperties.includes(tileIdx)) {
+      owned++;
+    } else if (t.o === potentialOwner) {
+      owned++;
+    }
+  });
+  
+  return owned === groupTiles.length ? potentialOwner : -1;
 }
 
 function startAuction(tileIndex) {
@@ -2200,13 +2363,107 @@ function advanceAuctionIfAI() {
     if (!auction) return;
     let p = players[part.playerIndex];
     let nextBid = calcNextBid();
-    let bidThreshold = auction.tilePrice * 0.75;
-    let shouldBid = nextBid <= bidThreshold && p.money >= nextBid * 2 && secureRandom() > 0.25;
-    if (shouldBid) {
-      auctionBid();
-    } else {
-      auctionPass();
+    
+    // ═══════════════════════════════════════════════════════════════
+    // STRATEGIC AUCTION AI - Monopoly-focused bidding
+    // ═══════════════════════════════════════════════════════════════
+    
+    let tile = tiles[auction.tileIndex];
+    let strategicValue = calculateStrategicValue(auction.tileIndex, part.playerIndex);
+    
+    // Calculate AI's interest level in this property
+    let interestMultiplier = 1.0;
+    
+    if (tile.type === 'property') {
+      let colorGroup = tile.row;
+      let groupTiles = tiles.filter(t => t.type === 'property' && t.row === colorGroup);
+      let aiOwned = groupTiles.filter(t => t.o === part.playerIndex).length;
+      
+      // VERY interested if this completes a monopoly
+      if (aiOwned === groupTiles.length - 1) {
+        interestMultiplier = 2.5;  // Willing to pay 2.5x for monopoly completion!
+      }
+      // Moderately interested if this gets AI closer to monopoly
+      else if (aiOwned === groupTiles.length - 2) {
+        interestMultiplier = 1.8;  // 2nd property in set
+      }
+      // Somewhat interested if AI already has one
+      else if (aiOwned > 0) {
+        interestMultiplier = 1.4;
+      }
+      
+      // Check if any OTHER player is close to monopoly here
+      let someoneElseClose = false;
+      players.forEach((otherP, idx) => {
+        if (idx !== part.playerIndex) {
+          let theirOwned = groupTiles.filter(t => t.o === idx).length;
+          if (theirOwned === groupTiles.length - 1) {
+            // Another player needs this for monopoly - BID HARD to block them!
+            interestMultiplier = Math.max(interestMultiplier, 2.0);
+            someoneElseClose = true;
+          }
+        }
+      });
+      
+      // Reduce interest if property already has opponent owner with monopoly nearby
+      let opponentMonopolyThreat = false;
+      players.forEach((otherP, idx) => {
+        if (idx !== part.playerIndex) {
+          let theirOwned = groupTiles.filter(t => t.o === idx).length;
+          if (theirOwned >= groupTiles.length - 1) {
+            opponentMonopolyThreat = true;
+          }
+        }
+      });
     }
+    
+    if (tile.type === 'railroad') {
+      let railroadsOwned = tiles.filter(t => t.type === 'railroad' && t.o === part.playerIndex).length;
+      // More railroads = more valuable to complete the set
+      if (railroadsOwned === 3) {
+        interestMultiplier = 1.8;  // 4th railroad is valuable!
+      } else if (railroadsOwned === 2) {
+        interestMultiplier = 1.4;
+      } else if (railroadsOwned === 1) {
+        interestMultiplier = 1.2;
+      }
+    }
+    
+    if (tile.type === 'utility') {
+      let utilitiesOwned = tiles.filter(t => t.type === 'utility' && t.o === part.playerIndex).length;
+      if (utilitiesOwned === 1) {
+        interestMultiplier = 1.6;  // Complete the utility pair!
+      }
+    }
+    
+    // Calculate maximum willing to pay
+    let maxWillingToPay = strategicValue * interestMultiplier;
+    
+    // AI should be more conservative with money if running low
+    let cashReserveNeeded = 300;  // Keep reserve for rent/taxes
+    let availableCash = p.money - cashReserveNeeded;
+    
+    // Don't bid if can't afford to keep reserve
+    if (nextBid > availableCash) {
+      auctionPass();
+      return;
+    }
+    
+    // Don't bid above maximum strategic value
+    if (nextBid > maxWillingToPay) {
+      auctionPass();
+      return;
+    }
+    
+    // Add some randomness (10% chance to pass even if willing, to seem unpredictable)
+    if (secureRandom() < 0.1 && nextBid > tile.price * 0.5) {
+      auctionPass();
+      return;
+    }
+    
+    // Otherwise, bid!
+    auctionBid();
+    
   }, 700 + Math.floor(secureRandom() * 500));
 }
 
@@ -2426,12 +2683,16 @@ function updateButtons() {
 }
 
 function checkBankruptcy() {
+  let bankruptcyOccurred = false;
+  
   players.forEach((p, idx) => {
     if (p.money < 0) {
       log(`💀 ${p.name} is BANKRUPT!`, 'log-expense');
       beep(200);
       beep(200);
       beep(200);
+      
+      // Clear all properties owned by bankrupt player
       tiles.forEach(t => {
         if (t.o === idx) {
           t.o = -1;
@@ -2440,15 +2701,27 @@ function checkBankruptcy() {
           t.mortgaged = false;
         }
       });
-      let activePlayers = players.filter(p => p.money >= 0);
-      if (activePlayers.length === 1) {
-        setTimeout(() => {
-          alert(`🏆 ${activePlayers[0].name} WINS!`);
-          backToMenu();
-        }, 1000);
-      }
+      
+      bankruptcyOccurred = true;
     }
   });
+  
+  // Check for winner AFTER processing all bankruptcies
+  if (bankruptcyOccurred) {
+    let activePlayers = players.filter(p => p.money >= 0);
+    if (activePlayers.length === 1) {
+      setTimeout(() => {
+        alert(`🏆 ${activePlayers[0].name} WINS THE GAME!`);
+        backToMenu();
+      }, 1000);
+    } else if (activePlayers.length === 0) {
+      // Edge case: everyone went bankrupt somehow
+      setTimeout(() => {
+        alert(`Game Over - No winners!`);
+        backToMenu();
+      }, 1000);
+    }
+  }
 }
 
 function log(message, type = '') {
