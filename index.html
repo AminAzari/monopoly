@@ -14,8 +14,6 @@ body {
   padding: 20px;
   min-height: 100vh;
 }
-h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px; }
-#status { color: white; font-size: 18px; font-weight: bold; margin-bottom: 15px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
 
 #menu-screen { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
 #menu-screen h3 { color: #2c3e50; margin-bottom: 30px; font-size: 24px; }
@@ -77,7 +75,7 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 .status-error { background: #f8d7da; color: #721c24; }
 
 #game-screen { display: none; }
-#wrap { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 20px; }
+#wrap { display: flex; justify-content: center; align-items: flex-start; }
 
 @media (max-width: 1300px) {
   #board { width: 98vw !important; height: calc(98vw * 0.67) !important; max-width: 1243px; max-height: 836px;
@@ -465,7 +463,7 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
     <button class="player-count-btn" onclick="setPlayerCount(4)">4</button>
   </div>
   <div id="player-config-area" style="display: none; margin-top: 20px;">
-    <label style="color: #2c3e50; font-weight: bold; display: block; margin-bottom: 15px;">Select which players are AI:</label>
+    <label style="color: #2c3e50; font-weight: bold; display: block; margin-bottom: 15px;">Configure Players:</label>
     <div id="player-checkboxes"></div>
     <button class="menu-button" onclick="startGameWithConfig()" style="margin-top: 20px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">Start Game</button>
   </div>
@@ -493,8 +491,6 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 </div>
 
 <div id="game-screen">
-  <h2>Monopoly Classic</h2>
-  <div id="status"></div>
   <div id="wrap">
     <div id="board">
       <div id="board-center">
@@ -531,6 +527,12 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
             <button id="loadBtn" onclick="loadGame()">📂 Load Game</button>
             <button id="endGameBtn" onclick="endGame()">🏆 End & Declare Winner</button>
             <button id="backMenuBtn" onclick="backToMenu()">🔙 Back to Menu</button>
+          </div>
+          <div id="strategy-guide" style="display: none; background: rgba(255,255,255,0.95); padding: 10px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); margin-top: 8px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 13px; color: #2c3e50; display: flex; align-items: center; gap: 5px;">
+              💡 Strategy Guide
+            </h3>
+            <div id="strategy-content" style="font-size: 11px; line-height: 1.4; color: #34495e;"></div>
           </div>
         </div>
       </div>
@@ -689,7 +691,7 @@ function resetGame(numP = 2) {
   const names = ['Red', 'Blue', 'Green', 'Orange'];
   players = [];
   for (let i = 0; i < numP; i++) {
-    players.push({ pos: 0, money: 1500, jailTurns: 0, color: colors[i], name: names[i], isAI: false, jailFreeCards: [] });
+    players.push({ pos: 0, money: 1500, jailTurns: 0, color: colors[i], name: names[i], isAI: false, hasGuide: false, jailFreeCards: [] });
   }
   if (gameMode === 'ai') {
     for (let i = 1; i < numP; i++) {
@@ -710,6 +712,7 @@ function resetGame(numP = 2) {
   draw();
   updatePanels();
   updateButtons();
+  updateStrategyGuide();
   log('🎮 Game started! Roll the dice.', 'log-action');
   if (gameMode === 'online') {
     isMyTurn = isHost ? (current === 0) : (current === 1);
@@ -743,10 +746,12 @@ function backToMenu() {
 
 let selectedPlayerCount = 0;
 let playerAIConfig = [];
+let playerGuideConfig = [];
 
 function setPlayerCount(count) {
   selectedPlayerCount = count;
   playerAIConfig = new Array(count).fill(false);
+  playerGuideConfig = new Array(count).fill(false);
   
   // Update button selection
   document.querySelectorAll('.player-count-btn').forEach(btn => {
@@ -764,14 +769,20 @@ function setPlayerCount(count) {
   for (let i = 0; i < count; i++) {
     checkboxesHTML += `
       <div class="player-checkbox-item">
-        <label>
+        <label style="flex: 0.4;">
           <span class="player-color-indicator" style="background: ${playerColors[i]};"></span>
-          <span style="flex: 1;">${playerNames[i]}</span>
+          <span style="flex: 1; margin-left: 8px;">${playerNames[i]}</span>
         </label>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-          <span style="font-size: 14px; color: #666;">AI Player</span>
-          <input type="checkbox" id="ai-checkbox-${i}" onchange="toggleAI(${i})">
-        </label>
+        <div style="display: flex; gap: 15px;">
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <span style="font-size: 13px; color: #666;">AI</span>
+            <input type="checkbox" id="ai-checkbox-${i}" onchange="toggleAI(${i})">
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <span style="font-size: 13px; color: #666;">Guide</span>
+            <input type="checkbox" id="guide-checkbox-${i}" onchange="toggleGuide(${i})">
+          </label>
+        </div>
       </div>
     `;
   }
@@ -781,6 +792,10 @@ function setPlayerCount(count) {
 
 function toggleAI(playerIndex) {
   playerAIConfig[playerIndex] = document.getElementById(`ai-checkbox-${playerIndex}`).checked;
+}
+
+function toggleGuide(playerIndex) {
+  playerGuideConfig[playerIndex] = document.getElementById(`guide-checkbox-${playerIndex}`).checked;
 }
 
 function startGameWithConfig() {
@@ -793,11 +808,11 @@ function startGameWithConfig() {
   document.getElementById('player-count-screen').style.display = 'none';
   document.getElementById('game-screen').style.display = 'block';
   
-  // Initialize game with custom AI configuration
-  resetGameWithAIConfig(selectedPlayerCount, playerAIConfig);
+  // Initialize game with custom AI and guide configuration
+  resetGameWithAIConfig(selectedPlayerCount, playerAIConfig, playerGuideConfig);
 }
 
-function resetGameWithAIConfig(numP, aiConfig) {
+function resetGameWithAIConfig(numP, aiConfig, guideConfig) {
   tiles = MONOPOLY_CLASSIC.map((template, i) => ({ ...template, o: -1, h: 0, v: 0, mortgaged: false }));
   const playerColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
   players = [];
@@ -812,6 +827,7 @@ function resetGameWithAIConfig(numP, aiConfig) {
       pos: 0,
       money: 1500,
       isAI: isAI,
+      hasGuide: guideConfig[i] || false,
       inJail: false,
       jailTurns: 0,
       jailFreeCards: []
@@ -831,6 +847,7 @@ function resetGameWithAIConfig(numP, aiConfig) {
   draw();
   updatePanels();
   updateButtons();
+  updateStrategyGuide();
   log('🎮 Game started! Roll the dice.', 'log-action');
 }
 
@@ -1255,6 +1272,12 @@ function roll() {
       log(`🎲 ${p.name} rolled doubles [${diceRoll[0]}, ${diceRoll[1]}] and escaped jail!`, 'log-action');
       movePlayer(p.pos + diceRoll[0] + diceRoll[1]);
       landOnTile();
+      draw();
+      updatePanels();
+      updateButtons();
+      if (p.isAI) {
+        setTimeout(() => aiTakeTurn(), 1500);
+      }
     } else {
       p.jailTurns--;
       if (p.jailTurns === 0) {
@@ -1265,13 +1288,23 @@ function roll() {
         movePlayer(p.pos + diceRoll[0] + diceRoll[1]);
         landOnTile();
         checkBankruptcy();
+        draw();
+        updatePanels();
+        updateButtons();
+        if (p.isAI) {
+          setTimeout(() => aiTakeTurn(), 1500);
+        }
       } else {
         log(`🎲 ${p.name} rolled [${diceRoll[0]}, ${diceRoll[1]}] — ${p.jailTurns} turns left in jail`, 'log-action');
+        draw();
+        updatePanels();
+        updateButtons();
+        // AI didn't escape jail, should end turn
+        if (p.isAI) {
+          setTimeout(() => aiEndTurn(), 1500);
+        }
       }
     }
-    draw();
-    updatePanels();
-    updateButtons();
     return;
   }
   diceRoll = [secureRandInt(6), secureRandInt(6)];
@@ -1287,6 +1320,7 @@ function roll() {
   draw();
   updatePanels();
   updateButtons();
+  updateStrategyGuide();
   if (p.isAI) {
     setTimeout(() => aiTakeTurn(), 1500);
   }
@@ -1635,6 +1669,7 @@ function switchTurn() {
   draw();
   updatePanels();
   updateButtons();
+  updateStrategyGuide();
   if (players[current].isAI) {
     setTimeout(() => {
       roll();
@@ -1929,6 +1964,8 @@ function unmortgageProperty(tileIndex) {
 function aiTakeTurn() {
   let p = players[current];
   let t = tiles[p.pos];
+  
+  // Check if on an unowned property
   if ((t.type === 'property' || t.type === 'railroad' || t.type === 'utility') && t.o === -1) {
     if (p.money >= t.price * 1.2) {
       setTimeout(() => {
@@ -1943,6 +1980,8 @@ function aiTakeTurn() {
       return;
     }
   }
+  
+  // Default: end turn
   setTimeout(() => aiEndTurn(), 1200);
 }
 
@@ -2766,12 +2805,6 @@ function updatePanels() {
     }
     panel.appendChild(card);
   });
-  let status = document.getElementById('status');
-  if (gameMode === 'online') {
-    status.textContent = isMyTurn ? `Your turn (${players[current].name})` : `${players[current].name}'s turn`;
-  } else {
-    status.textContent = `${players[current].name}'s Turn`;
-  }
 }
 
 function updateButtons() {
@@ -2781,7 +2814,7 @@ function updateButtons() {
   document.getElementById('rollBtn').disabled = rolled || !canPlay;
   let canBuy = rolled && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility') && t.o === -1 && p.money >= t.price && canPlay;
   document.getElementById('buyBtn').disabled = !canBuy;
-  document.getElementById('endBtn').disabled = !rolled && p.jailTurns === 0 || !canPlay;
+  document.getElementById('endBtn').disabled = ((!rolled && p.jailTurns === 0) || !canPlay);
   document.getElementById('sellBtn').disabled = !canPlay;
   document.getElementById('buildBtn').disabled = !canPlay;
   document.getElementById('villaBtn').disabled = !canPlay;
@@ -2799,6 +2832,125 @@ function updateButtons() {
     gojfBtn.style.display = 'none';
   }
 }
+
+function updateStrategyGuide() {
+  let guidePanel = document.getElementById('strategy-guide');
+  let guideContent = document.getElementById('strategy-content');
+  
+  // Return silently if elements don't exist (e.g., during initial load)
+  if (!guidePanel || !guideContent) {
+    return;
+  }
+  
+  if (!players || players.length === 0) {
+    guidePanel.style.display = 'none';
+    return;
+  }
+  
+  let p = players[current];
+  
+  // Show guide only if current player has guide enabled
+  if (!p || !p.hasGuide) {
+    guidePanel.style.display = 'none';
+    return;
+  }
+  
+  guidePanel.style.display = 'block';
+  
+  let tips = [];
+  let t = tiles[p.pos];
+  
+  // Jail advice
+  if (p.jailTurns > 0) {
+    if (p.jailFreeCards && p.jailFreeCards.length > 0) {
+      tips.push("🃏 <strong>Use your Get Out of Jail Free card</strong> - it's free!");
+    } else if (p.money >= 200 && p.jailTurns === 3) {
+      tips.push("💸 <strong>Pay $50 bail now</strong> - don't risk staying in jail when you have good cash flow");
+    } else if (p.money < 100) {
+      tips.push("🎲 <strong>Try rolling for doubles</strong> - save your $50 since money is tight");
+    } else {
+      tips.push(`🎲 <strong>Roll for doubles</strong> (${p.jailTurns} turns left) or pay $50 bail if you need to move soon`);
+    }
+  }
+  
+  // Property purchase advice
+  if (rolled && t.o === -1 && (t.type === 'property' || t.type === 'railroad' || t.type === 'utility')) {
+    let affordability = p.money / t.price;
+    if (t.type === 'railroad') {
+      let ownedRailroads = tiles.filter(tile => tile.type === 'railroad' && tile.o === current).length;
+      if (ownedRailroads > 0) {
+        tips.push(`🚂 <strong>BUY THIS RAILROAD!</strong> You own ${ownedRailroads} already - owning more multiplies rent significantly`);
+      } else if (affordability > 5) {
+        tips.push("🚂 <strong>Good buy</strong> - Railroads provide steady income and you have plenty of cash");
+      }
+    } else if (t.type === 'utility') {
+      let ownedUtilities = tiles.filter(tile => tile.type === 'utility' && tile.o === current).length;
+      if (ownedUtilities === 1) {
+        tips.push("⚡ <strong>BUY to complete the utility monopoly</strong> - doubles your utility income!");
+      } else if (affordability < 3) {
+        tips.push("⚡ Consider skipping - utilities are low priority when cash is limited");
+      }
+    } else if (t.type === 'property') {
+      let sameColorOwned = tiles.filter(tile => tile.row === t.row && tile.o === current).length;
+      let sameColorTotal = tiles.filter(tile => tile.row === t.row).length;
+      
+      if (sameColorOwned === sameColorTotal - 1) {
+        tips.push(`🏠 <strong>MUST BUY - COMPLETES MONOPOLY!</strong> You'll own all ${t.name.split(' ')[0]} properties!`);
+      } else if (sameColorOwned > 0) {
+        tips.push(`🏠 <strong>Good buy</strong> - You already own ${sameColorOwned} ${t.name.split(' ')[0]} property. Work toward monopoly!`);
+      } else if (affordability > 4) {
+        tips.push(`💰 <strong>Safe purchase</strong> - You have ${Math.floor(affordability)}x the price in cash`);
+      } else if (affordability < 2.5) {
+        tips.push("⚠️ <strong>Risky</strong> - This leaves you with little cash reserves. Consider auction.");
+      }
+    }
+  }
+  
+  // Building advice
+  let monopolies = [];
+  for (let row = 0; row <= 7; row++) {
+    let propsInColor = tiles.filter(t => t.row === row);
+    let ownedInColor = propsInColor.filter(t => t.o === current);
+    if (propsInColor.length > 0 && ownedInColor.length === propsInColor.length) {
+      monopolies.push({ row: row, props: ownedInColor });
+    }
+  }
+  
+  if (monopolies.length > 0 && p.money > 200) {
+    let unbuildable = monopolies.find(m => m.props.some(p => p.mortgaged));
+    if (!unbuildable) {
+      let canAffordHouse = monopolies.find(m => p.money >= m.props[0].buildCost * 1.5);
+      if (canAffordHouse) {
+        tips.push("🏗️ <strong>Build houses!</strong> You have monopolies and good cash - building multiplies your income");
+      }
+    }
+  }
+  
+  // Cash management
+  if (p.money < 200) {
+    tips.push("💰 <strong>Low on cash</strong> - Consider mortgaging unimproved properties or avoiding expensive purchases");
+  }
+  
+  // Position advice
+  let distanceToGo = (40 - p.pos) % 40;
+  if (!rolled && distanceToGo <= 12 && distanceToGo > 0) {
+    tips.push("🎯 <strong>Close to GO</strong> - You'll collect $200 soon, good time for strategic spending");
+  }
+  
+  // Opponent analysis
+  let richestOpponent = players.filter((pl, idx) => idx !== current).reduce((max, pl) => pl.money > max.money ? pl : max, {money: 0});
+  if (richestOpponent.money > p.money * 2) {
+    tips.push(`⚔️ <strong>You're behind ${richestOpponent.name}</strong> - Focus on monopolies and aggressive building`);
+  }
+  
+  // Default tip if nothing specific
+  if (tips.length === 0) {
+    tips.push("💡 Focus on completing color monopolies - they're the key to winning!");
+  }
+  
+  guideContent.innerHTML = tips.map(tip => `<div style="margin-bottom: 8px; padding: 6px; background: #f8f9fa; border-left: 3px solid #667eea; border-radius: 4px;">${tip}</div>`).join('');
+}
+
 
 function checkBankruptcy() {
   let bankruptcyOccurred = false;
@@ -3043,6 +3195,14 @@ function loadGame() {
     console.log('Restoring game state...');
     tiles = gameState.tiles;
     players = gameState.players;
+    
+    // Migrate old saves to add hasGuide property if missing
+    players.forEach(p => {
+      if (p.hasGuide === undefined) {
+        p.hasGuide = false;
+      }
+    });
+    
     current = gameState.current || 0;
     rolled = gameState.rolled || false;
     diceRoll = gameState.diceRoll || [0, 0];
@@ -3080,6 +3240,7 @@ function loadGame() {
     draw();
     updatePanels();
     updateButtons();
+    updateStrategyGuide();
     alert('✅ Game loaded successfully!');
     log('📂 Game loaded', 'log-action');
     console.log('=== LOAD COMPLETE ===');
