@@ -42,6 +42,28 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
   cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 .player-count-btn:hover { transform: translateY(-3px); }
+.player-count-btn.selected { 
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 3px solid #2c3e50;
+}
+
+.player-checkbox-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; margin: 8px 0; background: #f8f9fa;
+  border-radius: 8px; border: 2px solid #ddd;
+}
+.player-checkbox-item label {
+  font-size: 16px; color: #2c3e50; font-weight: 500;
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  flex: 1;
+}
+.player-checkbox-item input[type="checkbox"] {
+  width: 20px; height: 20px; cursor: pointer;
+}
+.player-color-indicator {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid #333; display: inline-block;
+}
 
 #online-lobby { display: none; max-width: 500px; margin: 50px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
 #online-lobby h3 { color: #2c3e50; margin-bottom: 20px; }
@@ -58,9 +80,9 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 #wrap { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 20px; }
 
 @media (max-width: 1300px) {
-  #board { width: 98vw !important; height: calc(98vw * 0.73) !important; max-width: 1243px; max-height: 907px;
+  #board { width: 98vw !important; height: calc(98vw * 0.67) !important; max-width: 1243px; max-height: 836px;
     grid-template-columns: repeat(11, calc((98vw - 26px) / 11)) !important;
-    grid-template-rows: repeat(11, calc(((98vw - 26px) / 11) * 0.67)) !important;
+    grid-template-rows: repeat(11, calc(((98vw - 26px) / 11) * 0.66)) !important;
   }
   .controls { width: 90% !important; max-width: 1243px; }
   .controls button { font-size: 10px !important; padding: 5px 8px !important; }
@@ -117,7 +139,7 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
   display: flex; flex-wrap: wrap; gap: 1px; justify-content: flex-end;
 }
 .pawn {
-  display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+  display: inline-block; width: 18px; height: 18px; border-radius: 50%;
   border: 2px solid #333; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
   animation: pawnAppear 0.3s ease; flex-shrink: 0;
 }
@@ -435,11 +457,17 @@ h2 { color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); margin-bottom: 10px
 </div>
 
 <div id="player-count-screen">
-  <h3>How many players?</h3>
-  <div>
-    <button class="player-count-btn" onclick="startGame(2)">2</button>
-    <button class="player-count-btn" onclick="startGame(3)">3</button>
-    <button class="player-count-btn" onclick="startGame(4)">4</button>
+  <h3>Configure Players</h3>
+  <div style="margin-bottom: 20px;">
+    <label style="color: #2c3e50; font-weight: bold; display: block; margin-bottom: 10px;">Number of Players:</label>
+    <button class="player-count-btn" onclick="setPlayerCount(2)">2</button>
+    <button class="player-count-btn" onclick="setPlayerCount(3)">3</button>
+    <button class="player-count-btn" onclick="setPlayerCount(4)">4</button>
+  </div>
+  <div id="player-config-area" style="display: none; margin-top: 20px;">
+    <label style="color: #2c3e50; font-weight: bold; display: block; margin-bottom: 15px;">Select which players are AI:</label>
+    <div id="player-checkboxes"></div>
+    <button class="menu-button" onclick="startGameWithConfig()" style="margin-top: 20px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">Start Game</button>
   </div>
   <button class="menu-button" onclick="backToMenu()" style="margin-top: 30px;">← Back</button>
 </div>
@@ -704,10 +732,106 @@ function backToMenu() {
   document.getElementById('player-count-screen').style.display = 'none';
   document.getElementById('online-lobby').style.display = 'none';
   document.getElementById('game-screen').style.display = 'none';
+  // Reset player config screen
+  document.getElementById('player-config-area').style.display = 'none';
+  document.querySelectorAll('.player-count-btn').forEach(btn => btn.classList.remove('selected'));
   if (conn) conn.close();
   if (peer) peer.destroy();
   conn = null;
   peer = null;
+}
+
+let selectedPlayerCount = 0;
+let playerAIConfig = [];
+
+function setPlayerCount(count) {
+  selectedPlayerCount = count;
+  playerAIConfig = new Array(count).fill(false);
+  
+  // Update button selection
+  document.querySelectorAll('.player-count-btn').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  event.target.classList.add('selected');
+  
+  // Show player configuration checkboxes
+  document.getElementById('player-config-area').style.display = 'block';
+  
+  const playerColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
+  const playerNames = ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
+  
+  let checkboxesHTML = '';
+  for (let i = 0; i < count; i++) {
+    checkboxesHTML += `
+      <div class="player-checkbox-item">
+        <label>
+          <span class="player-color-indicator" style="background: ${playerColors[i]};"></span>
+          <span style="flex: 1;">${playerNames[i]}</span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <span style="font-size: 14px; color: #666;">AI Player</span>
+          <input type="checkbox" id="ai-checkbox-${i}" onchange="toggleAI(${i})">
+        </label>
+      </div>
+    `;
+  }
+  
+  document.getElementById('player-checkboxes').innerHTML = checkboxesHTML;
+}
+
+function toggleAI(playerIndex) {
+  playerAIConfig[playerIndex] = document.getElementById(`ai-checkbox-${playerIndex}`).checked;
+}
+
+function startGameWithConfig() {
+  if (selectedPlayerCount === 0) {
+    alert('Please select the number of players first!');
+    return;
+  }
+  
+  numPlayers = selectedPlayerCount;
+  document.getElementById('player-count-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+  
+  // Initialize game with custom AI configuration
+  resetGameWithAIConfig(selectedPlayerCount, playerAIConfig);
+}
+
+function resetGameWithAIConfig(numP, aiConfig) {
+  tiles = MONOPOLY_CLASSIC.map((template, i) => ({ ...template, o: -1, h: 0, v: 0, mortgaged: false }));
+  const playerColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
+  players = [];
+  for (let i = 0; i < numP; i++) {
+    let name = 'Player ' + (i + 1);
+    let isAI = aiConfig[i];
+    if (isAI) name += ' 🤖';
+    
+    players.push({
+      name: name,
+      color: playerColors[i],
+      pos: 0,
+      money: 1500,
+      isAI: isAI,
+      inJail: false,
+      jailTurns: 0,
+      jailFreeCards: []
+    });
+  }
+  
+  current = 0;
+  rolled = false;
+  diceRoll = [0, 0];
+  sellingMode = false;
+  buildMode = null;
+  mortgageMode = false;
+  unmortgageMode = false;
+  logEntries = [];
+  chanceDeck = buildChanceDeck();
+  communityDeck = buildCommunityDeck();
+  draw();
+  updatePanels();
+  updateButtons();
+  log('🎮 Game started! Roll the dice.', 'log-action');
 }
 
 function startGame(numP) {
@@ -919,7 +1043,16 @@ function draw() {
     if (t.type === 'property' && t.row !== undefined) {
       let hdr = document.createElement('div');
       hdr.className = 'tile-header row-' + t.row;
-      hdr.innerHTML = '<span class="tile-num">' + i + '</span>';
+      let displayText = '<span class="tile-num">' + i + '</span>';
+      
+      // Add building information next to tile number
+      if (t.h > 0) {
+        displayText += '<span style="font-size: 9px; font-weight: bold; margin-left: 2px;">: ' + t.h + '🏠</span>';
+      } else if (t.v > 0) {
+        displayText += '<span style="font-size: 9px; font-weight: bold; margin-left: 2px;">: 🏨</span>';
+      }
+      
+      hdr.innerHTML = displayText;
       div.appendChild(hdr);
     } else {
       let hdr = document.createElement('div');
@@ -1036,22 +1169,7 @@ function draw() {
       }
     }
 
-    // Buildings
-    if (t.h > 0 || t.v > 0) {
-      let buildDiv = document.createElement('div');
-      buildDiv.style.display = 'flex'; buildDiv.style.flexWrap = 'wrap'; buildDiv.style.gap = '1px';
-      for (let j = 0; j < t.h; j++) {
-        let house = document.createElement('div');
-        house.className = 'house'; house.title = 'House';
-        buildDiv.appendChild(house);
-      }
-      for (let j = 0; j < t.v; j++) {
-        let villa = document.createElement('div');
-        villa.className = 'villa'; villa.title = 'Hotel';
-        buildDiv.appendChild(villa);
-      }
-      div.appendChild(buildDiv);
-    }
+    // Buildings - removed from here, now shown in tile header
 
     // Bottom row: owner dot on left, pawns on right
     let bottomDiv = document.createElement('div');
@@ -2711,14 +2829,12 @@ function checkBankruptcy() {
     let activePlayers = players.filter(p => p.money >= 0);
     if (activePlayers.length === 1) {
       setTimeout(() => {
-        alert(`🏆 ${activePlayers[0].name} WINS THE GAME!`);
-        backToMenu();
+        alert(`🏆 ${activePlayers[0].name} WINS THE GAME!\n\nYou can review the game log or start a new game.`);
       }, 1000);
     } else if (activePlayers.length === 0) {
       // Edge case: everyone went bankrupt somehow
       setTimeout(() => {
-        alert(`Game Over - No winners!`);
-        backToMenu();
+        alert(`Game Over - No winners!\n\nYou can review the game log or start a new game.`);
       }, 1000);
     }
   }
